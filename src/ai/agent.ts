@@ -89,10 +89,17 @@ export class Agent {
         output_config: { effort: "low" },
         ...(useFallback ? { fallbacks: "default" } : {}),
       } as unknown as Anthropic.MessageCreateParamsNonStreaming;
-      const res = await client.messages.create(body, useFallback ? { headers: { "anthropic-beta": "server-side-fallback-2026-07-01" } } : undefined);
+      const res = await client.messages.create(
+        body,
+        useFallback ? { headers: { "anthropic-beta": "server-side-fallback-2026-07-01" } } : undefined,
+      );
 
       messages.push({ role: "assistant", content: res.content as Anthropic.ContentBlockParam[] });
-      const said = res.content.filter((b): b is Anthropic.TextBlock => b.type === "text").map((b) => b.text).join("\n").trim();
+      const said = res.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("\n")
+        .trim();
       if (said) {
         ev.onText(said);
         telemetry.log({ kind: "chat_ai", source: "ai", text: said, turn });
@@ -135,7 +142,10 @@ export class Agent {
       openrouter: "https://openrouter.ai/api/v1/chat/completions",
       anthropic: "",
     }[provider];
-    const tools = ALL_TOOLS.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: schemaFor(t) } }));
+    const tools = ALL_TOOLS.map((t) => ({
+      type: "function",
+      function: { name: t.name, description: t.description, parameters: schemaFor(t) },
+    }));
     const msgs = this.oaHistory;
     msgs.push({ role: "user", content: withState(text) });
 
@@ -177,7 +187,10 @@ export class Agent {
       if (images.length)
         msgs.push({
           role: "user",
-          content: [{ type: "text", text: "Frames from view_frame:" }, ...images.map((u) => ({ type: "image_url", image_url: { url: u } }))],
+          content: [
+            { type: "text", text: "Frames from view_frame:" },
+            ...images.map((u) => ({ type: "image_url", image_url: { url: u } })),
+          ],
         });
     }
   }

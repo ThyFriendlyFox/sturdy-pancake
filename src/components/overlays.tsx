@@ -20,14 +20,40 @@ const STYLE_DEFAULTS: Record<TextStyle, Partial<TextItem>> = {
 function makeText(a: Partial<TextItem>): TextItem {
   const style = (STYLES.includes(a.style as TextStyle) ? a.style : "title") as TextStyle;
   const t = store.get().time;
-  const base: TextItem = { id: uid("t_"), text: "Text", start: t, end: t + 3, x: 0.5, y: 0.5, size: 0.06, color: "#ffffff", bg: null, style, anim: "fade", font: "sans", ...STYLE_DEFAULTS[style] };
+  const base: TextItem = {
+    id: uid("t_"),
+    text: "Text",
+    start: t,
+    end: t + 3,
+    x: 0.5,
+    y: 0.5,
+    size: 0.06,
+    color: "#ffffff",
+    bg: null,
+    style,
+    anim: "fade",
+    font: "sans",
+    ...STYLE_DEFAULTS[style],
+  };
   return sanitize({ ...base, ...stripUndef(a) });
 }
 const stripUndef = <T extends object>(o: T) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as Partial<T>;
-const sanitize = (x: TextItem): TextItem => ({ ...x, size: clamp(x.size, 0.015, 0.2), x: clamp(x.x, 0, 1), y: clamp(x.y, 0, 1), end: Math.max(x.start + 0.2, x.end) });
+const sanitize = (x: TextItem): TextItem => ({
+  ...x,
+  size: clamp(x.size, 0.015, 0.2),
+  x: clamp(x.x, 0, 1),
+  y: clamp(x.y, 0, 1),
+  end: Math.max(x.start + 0.2, x.end),
+});
 
 const updateText = (src: "ai" | "user", id: string, patch: Partial<TextItem>, merge = false) =>
-  editX("update_text", src, { id, ...patch }, (p) => ({ ...p, texts: p.texts.map((x) => (x.id === id ? sanitize({ ...x, ...stripUndef(patch) }) : x)) }), merge);
+  editX(
+    "update_text",
+    src,
+    { id, ...patch },
+    (p) => ({ ...p, texts: p.texts.map((x) => (x.id === id ? sanitize({ ...x, ...stripUndef(patch) }) : x)) }),
+    merge,
+  );
 
 function TextPanel() {
   const texts = useStore((s) => s.project.texts);
@@ -68,18 +94,68 @@ function TextPanel() {
           <Chips options={ANIMS} value={open.anim} onChange={(a) => updateText("user", open.id, { anim: a })} />
           <Chips options={FONTS} value={open.font} onChange={(f) => updateText("user", open.id, { font: f })} />
           <div className="row">
-            <label className="color">Text <input type="color" value={open.color} onChange={(e) => updateText("user", open.id, { color: e.target.value }, true)} /></label>
             <label className="color">
-              Box <input type="color" value={open.bg && open.bg.startsWith("#") ? open.bg : "#000000"} onChange={(e) => updateText("user", open.id, { bg: e.target.value }, true)} />
+              Text <input type="color" value={open.color} onChange={(e) => updateText("user", open.id, { color: e.target.value }, true)} />
             </label>
-            <button className="btn small" onClick={() => updateText("user", open.id, { bg: null })}>No box</button>
+            <label className="color">
+              Box{" "}
+              <input
+                type="color"
+                value={open.bg && open.bg.startsWith("#") ? open.bg : "#000000"}
+                onChange={(e) => updateText("user", open.id, { bg: e.target.value }, true)}
+              />
+            </label>
+            <button className="btn small" onClick={() => updateText("user", open.id, { bg: null })}>
+              No box
+            </button>
           </div>
-          <Slider label="Size" min={0.015} max={0.2} step={0.005} value={open.size} format={(v) => Math.round(v * 1000) / 10 + "%"} onChange={(v) => updateText("user", open.id, { size: v }, true)} />
-          <Slider label="Up / down" min={0} max={1} value={open.y} format={(v) => Math.round(v * 100) + "%"} onChange={(v) => updateText("user", open.id, { y: v }, true)} />
-          <Slider label="Left / right" min={0} max={1} value={open.x} format={(v) => Math.round(v * 100) + "%"} onChange={(v) => updateText("user", open.id, { x: v }, true)} />
-          <Slider label="Show from" min={0} max={dur} step={0.05} value={open.start} format={fmtTime} onChange={(v) => updateText("user", open.id, { start: v, end: Math.max(open.end, v + 0.2) }, true)} />
-          <Slider label="Show until" min={0} max={dur} step={0.05} value={open.end} format={fmtTime} onChange={(v) => updateText("user", open.id, { end: v }, true)} />
-          <button className="btn small danger" onClick={() => editX("remove_text", "user", { id: open.id }, (p) => ({ ...p, texts: p.texts.filter((x) => x.id !== open.id) }))}>
+          <Slider
+            label="Size"
+            min={0.015}
+            max={0.2}
+            step={0.005}
+            value={open.size}
+            format={(v) => Math.round(v * 1000) / 10 + "%"}
+            onChange={(v) => updateText("user", open.id, { size: v }, true)}
+          />
+          <Slider
+            label="Up / down"
+            min={0}
+            max={1}
+            value={open.y}
+            format={(v) => Math.round(v * 100) + "%"}
+            onChange={(v) => updateText("user", open.id, { y: v }, true)}
+          />
+          <Slider
+            label="Left / right"
+            min={0}
+            max={1}
+            value={open.x}
+            format={(v) => Math.round(v * 100) + "%"}
+            onChange={(v) => updateText("user", open.id, { x: v }, true)}
+          />
+          <Slider
+            label="Show from"
+            min={0}
+            max={dur}
+            step={0.05}
+            value={open.start}
+            format={fmtTime}
+            onChange={(v) => updateText("user", open.id, { start: v, end: Math.max(open.end, v + 0.2) }, true)}
+          />
+          <Slider
+            label="Show until"
+            min={0}
+            max={dur}
+            step={0.05}
+            value={open.end}
+            format={fmtTime}
+            onChange={(v) => updateText("user", open.id, { end: v }, true)}
+          />
+          <button
+            className="btn small danger"
+            onClick={() => editX("remove_text", "user", { id: open.id }, (p) => ({ ...p, texts: p.texts.filter((x) => x.id !== open.id) }))}
+          >
             Delete text
           </button>
         </div>
@@ -139,7 +215,17 @@ export const textComponent: ComponentDef = {
 
 // ---------- motion graphics ----------
 const editG = editFor("motion");
-const PRESETS: MotionPreset[] = ["confetti", "flash", "zoom-punch", "shake", "vignette", "letterbox", "grain", "light-leak", "progress-bar"];
+const PRESETS: MotionPreset[] = [
+  "confetti",
+  "flash",
+  "zoom-punch",
+  "shake",
+  "vignette",
+  "letterbox",
+  "grain",
+  "light-leak",
+  "progress-bar",
+];
 const WHOLE_VIDEO: MotionPreset[] = ["vignette", "letterbox", "grain", "progress-bar"];
 
 function makeMotion(a: Partial<MotionItem>): MotionItem {
@@ -162,7 +248,13 @@ function MotionPanel() {
   const motions = useStore((s) => s.project.motions);
   const dur = useStore((s) => Math.max(1, totalDuration(s.project)));
   const update = (id: string, patch: Partial<MotionItem>, merge = false) =>
-    editG("update_motion", "user", { id, ...patch }, (p) => ({ ...p, motions: p.motions.map((m) => (m.id === id ? { ...m, ...patch } : m)) }), merge);
+    editG(
+      "update_motion",
+      "user",
+      { id, ...patch },
+      (p) => ({ ...p, motions: p.motions.map((m) => (m.id === id ? { ...m, ...patch } : m)) }),
+      merge,
+    );
   return (
     <div className="stack">
       <div className="chips">
@@ -186,14 +278,42 @@ function MotionPanel() {
             <b>✦ {m.preset}</b>
             <span className="row">
               <input type="color" value={m.color} onChange={(e) => update(m.id, { color: e.target.value }, true)} />
-              <button className="btn small danger" onClick={() => editG("remove_motion", "user", { id: m.id }, (p) => ({ ...p, motions: p.motions.filter((x) => x.id !== m.id) }))}>
+              <button
+                className="btn small danger"
+                onClick={() =>
+                  editG("remove_motion", "user", { id: m.id }, (p) => ({ ...p, motions: p.motions.filter((x) => x.id !== m.id) }))
+                }
+              >
                 Remove
               </button>
             </span>
           </div>
-          <Slider label="Strength" min={0} max={1} value={m.intensity} format={(v) => Math.round(v * 100) + "%"} onChange={(v) => update(m.id, { intensity: v }, true)} />
-          <Slider label="From" min={0} max={dur} step={0.05} value={m.start} format={fmtTime} onChange={(v) => update(m.id, { start: v, end: Math.max(m.end, v + 0.1) }, true)} />
-          <Slider label="Until" min={0} max={dur} step={0.05} value={m.end} format={fmtTime} onChange={(v) => update(m.id, { end: Math.max(m.start + 0.1, v) }, true)} />
+          <Slider
+            label="Strength"
+            min={0}
+            max={1}
+            value={m.intensity}
+            format={(v) => Math.round(v * 100) + "%"}
+            onChange={(v) => update(m.id, { intensity: v }, true)}
+          />
+          <Slider
+            label="From"
+            min={0}
+            max={dur}
+            step={0.05}
+            value={m.start}
+            format={fmtTime}
+            onChange={(v) => update(m.id, { start: v, end: Math.max(m.end, v + 0.1) }, true)}
+          />
+          <Slider
+            label="Until"
+            min={0}
+            max={dur}
+            step={0.05}
+            value={m.end}
+            format={fmtTime}
+            onChange={(v) => update(m.id, { end: Math.max(m.start + 0.1, v) }, true)}
+          />
         </div>
       ))}
     </div>
@@ -204,7 +324,10 @@ export const motionComponent: ComponentDef = {
   id: "motion",
   title: "Motion graphics",
   icon: "✦",
-  about: "Animated effects over the video: " + PRESETS.join(", ") + ". zoom-punch and shake move the camera; vignette/letterbox/grain/progress-bar default to the whole video.",
+  about:
+    "Animated effects over the video: " +
+    PRESETS.join(", ") +
+    ". zoom-punch and shake move the camera; vignette/letterbox/grain/progress-bar default to the whole video.",
   tools: [
     {
       name: "add_motion",
@@ -226,11 +349,20 @@ export const motionComponent: ComponentDef = {
     {
       name: "update_motion",
       description: "Change a motion graphic.",
-      params: { id: { type: "string" }, start: { type: "number" }, end: { type: "number" }, color: { type: "string" }, intensity: { type: "number" } },
+      params: {
+        id: { type: "string" },
+        start: { type: "number" },
+        end: { type: "number" },
+        color: { type: "string" },
+        intensity: { type: "number" },
+      },
       required: ["id"],
       run: ({ id, ...rest }) => {
         const patch = stripUndef(rest) as Partial<MotionItem>;
-        editG("update_motion", "ai", { id, ...patch }, (p) => ({ ...p, motions: p.motions.map((m) => (m.id === id ? { ...m, ...patch } : m)) }));
+        editG("update_motion", "ai", { id, ...patch }, (p) => ({
+          ...p,
+          motions: p.motions.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+        }));
         return "Updated";
       },
     },

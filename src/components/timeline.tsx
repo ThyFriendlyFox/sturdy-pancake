@@ -34,8 +34,12 @@ function Panel() {
           {fmtTime(time)} / {fmtTime(dur)}
         </span>
         <span className="row">
-          <button className="btn small" onClick={() => setZoom((z) => Math.max(8, z / 1.5))}>−</button>
-          <button className="btn small" onClick={() => setZoom((z) => Math.min(300, z * 1.5))}>+</button>
+          <button className="btn small" onClick={() => setZoom((z) => Math.max(8, z / 1.5))}>
+            −
+          </button>
+          <button className="btn small" onClick={() => setZoom((z) => Math.min(300, z * 1.5))}>
+            +
+          </button>
         </span>
       </div>
       <div
@@ -121,7 +125,8 @@ export const timelineComponent: ComponentDef = {
   id: "timeline",
   title: "Timeline",
   icon: "▤",
-  about: "Visual timeline of every track (video, voiceovers, music, text, motion) with the playhead. Use to seek, play/pause or select a clip.",
+  about:
+    "Visual timeline of every track (video, voiceovers, music, text, motion) with the playhead. Use to seek, play/pause or select a clip.",
   tools: [
     {
       name: "seek",

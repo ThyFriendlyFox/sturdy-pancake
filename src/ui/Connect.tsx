@@ -33,7 +33,9 @@ export function Connect(props: { current: AiSettings | null; onDone: (s: AiSetti
             </button>
           )}
         </div>
-        <p className="dim small">The AI edits your video and opens the tools you need. Your key stays on this phone and goes straight to the provider.</p>
+        <p className="dim small">
+          The AI edits your video and opens the tools you need. Your key stays on this phone and goes straight to the provider.
+        </p>
 
         <button className="btn primary wide" onClick={() => void startOpenRouterLogin()}>
           Sign in with Google / GitHub (via OpenRouter)
@@ -60,7 +62,9 @@ export function Connect(props: { current: AiSettings | null; onDone: (s: AiSetti
         </datalist>
 
         <label className="toggle small">
-          <span>Help improve the AI by sharing anonymous edit data (which tools were used and how — never your video files or your key)</span>
+          <span>
+            Help improve the AI by sharing anonymous edit data (which tools were used and how — never your video files or your key)
+          </span>
           <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} />
         </label>
 

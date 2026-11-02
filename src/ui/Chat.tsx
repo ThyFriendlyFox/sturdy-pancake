@@ -14,7 +14,14 @@ let nextId = 1;
 const msg = (role: ChatMsg["role"], text: string): ChatMsg => ({ id: nextId++, role, text });
 
 const STARTERS_EMPTY = ["Help me get started", "I want to make a vlog"];
-const STARTERS = ["Add a title at the start", "Make it look warmer", "Cut the first 2 seconds", "Lower my voice pitch", "Add confetti at the end", "Let me trim this clip"];
+const STARTERS = [
+  "Add a title at the start",
+  "Make it look warmer",
+  "Cut the first 2 seconds",
+  "Lower my voice pitch",
+  "Add confetti at the end",
+  "Let me trim this clip",
+];
 
 export function Chat(props: { agent: Agent | null; onConnect: () => void }) {
   const [msgs, setMsgs] = useState<ChatMsg[]>([]);
@@ -81,7 +88,14 @@ export function Chat(props: { agent: Agent | null; onConnect: () => void }) {
             ),
           )}
           {busy && (
-            <motion.div key="typing" layout="position" className="msg ai typing" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}>
+            <motion.div
+              key="typing"
+              layout="position"
+              className="msg ai typing"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+            >
               {[0, 1, 2].map((i) => (
                 <motion.i key={i} animate={{ y: [0, -5, 0] }} transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.12 }} />
               ))}

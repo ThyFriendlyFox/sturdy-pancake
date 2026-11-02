@@ -31,8 +31,24 @@ function Panel() {
   return (
     <div className="stack">
       <ClipPicker />
-      <Slider label="Start (trim in)" min={0} max={max} step={0.05} value={c.in} format={fmtTime} onChange={(v) => trim("user", c.id, v, undefined, true)} />
-      <Slider label={m?.kind === "image" ? "Length" : "End (trim out)"} min={0} max={max} step={0.05} value={c.out} format={fmtTime} onChange={(v) => trim("user", c.id, undefined, v, true)} />
+      <Slider
+        label="Start (trim in)"
+        min={0}
+        max={max}
+        step={0.05}
+        value={c.in}
+        format={fmtTime}
+        onChange={(v) => trim("user", c.id, v, undefined, true)}
+      />
+      <Slider
+        label={m?.kind === "image" ? "Length" : "End (trim out)"}
+        min={0}
+        max={max}
+        step={0.05}
+        value={c.out}
+        format={fmtTime}
+        onChange={(v) => trim("user", c.id, undefined, v, true)}
+      />
       <div className="row">
         <button className="btn" onClick={() => edit("split_at", "user", { time }, (p) => splitAt(p, time))}>
           ✂ Split at {fmtTime(time)}
@@ -43,8 +59,24 @@ function Panel() {
       </div>
       {range && (
         <div className="stack card-inner">
-          <Slider label="From" min={0} max={dur} step={0.05} value={range[0]} format={fmtTime} onChange={(v) => setRange([v, Math.max(v, range[1])])} />
-          <Slider label="To" min={0} max={dur} step={0.05} value={range[1]} format={fmtTime} onChange={(v) => setRange([Math.min(v, range[0]), v])} />
+          <Slider
+            label="From"
+            min={0}
+            max={dur}
+            step={0.05}
+            value={range[0]}
+            format={fmtTime}
+            onChange={(v) => setRange([v, Math.max(v, range[1])])}
+          />
+          <Slider
+            label="To"
+            min={0}
+            max={dur}
+            step={0.05}
+            value={range[1]}
+            format={fmtTime}
+            onChange={(v) => setRange([Math.min(v, range[0]), v])}
+          />
           <button
             className="btn danger"
             onClick={() => {

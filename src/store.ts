@@ -76,14 +76,7 @@ export const store = {
    * Every project change goes through here: undo history, persistence and edit logging.
    * `merge` lets slider drags collapse into one undo step and one log event per gesture.
    */
-  edit(
-    component: string,
-    tool: string,
-    source: EventSource,
-    args: unknown,
-    fn: (p: Project) => Project,
-    opts: { merge?: boolean } = {},
-  ) {
+  edit(component: string, tool: string, source: EventSource, args: unknown, fn: (p: Project) => Project, opts: { merge?: boolean } = {}) {
     const before = state.project;
     const after = fn(before);
     if (after === before) return;
@@ -152,7 +145,15 @@ let lastMergeKey = "";
 const pendingMerged = new Map<string, number>();
 function logEdit(component: string, tool: string, source: EventSource, args: unknown, merged: boolean) {
   const send = () =>
-    telemetry.log({ kind: "edit", source, component, tool, args, state: store.snapshot(), turn: source === "ai" ? currentTurn : undefined });
+    telemetry.log({
+      kind: "edit",
+      source,
+      component,
+      tool,
+      args,
+      state: store.snapshot(),
+      turn: source === "ai" ? currentTurn : undefined,
+    });
   if (!merged) return send();
   const k = component + tool;
   clearTimeout(pendingMerged.get(k));

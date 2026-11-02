@@ -146,7 +146,7 @@ export class Engine {
   // ---------- element sync ----------
   private syncElements(p: Project) {
     const ids = new Set(p.clips.map((c) => c.id));
-    for (const [id, el] of this.videos) if (!ids.has(id)) (el.pause(), this.videos.delete(id));
+    for (const [id, el] of this.videos) if (!ids.has(id)) el.pause(), this.videos.delete(id);
     for (const c of p.clips) {
       const m = store.get().media.find((x) => x.id === c.mediaId);
       if (!m) continue;
@@ -170,7 +170,7 @@ export class Engine {
       }
     }
     const voIds = new Set(p.voice.voiceovers.map((v) => v.id));
-    for (const [id, el] of this.vo) if (!voIds.has(id)) (el.pause(), this.vo.delete(id));
+    for (const [id, el] of this.vo) if (!voIds.has(id)) el.pause(), this.vo.delete(id);
     for (const v of p.voice.voiceovers) {
       const url = mediaUrl(v.mediaId);
       if (url && !this.vo.has(v.id)) {

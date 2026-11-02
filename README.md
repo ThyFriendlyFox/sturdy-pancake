@@ -20,12 +20,18 @@ You chat with an AI. It edits the video by calling **components** — self-conta
 | AI loop + providers | `src/ai/*` |
 | Edit-data endpoint | `api/events.ts` |
 
-Add a component: write a `ComponentDef` (id, title, about, tools, Panel) and add it to `src/components/index.ts`. The AI picks it up automatically.
+The full map is in [`agent-kit/docs/ARCHITECTURE.md`](agent-kit/docs/ARCHITECTURE.md); how to add a component is in [`agent-kit/docs/COMPONENTS.md`](agent-kit/docs/COMPONENTS.md).
 
 ## Develop
 
 ```bash
 npm install
 npm run dev
-npm run verify   # type check, build, tests
+npm run verify   # format check, type check, build, tests
 ```
+
+## Project process
+
+This repo uses the agent kit in [`agent-kit/`](agent-kit/ROUTING.md). Start with `agent-kit/ROUTING.md`.
+Work comes from [`agent-kit/ROADMAP.md`](agent-kit/ROADMAP.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+Security reports: see [agent-kit/SECURITY.md](agent-kit/SECURITY.md). Live at https://cutkit-amber.vercel.app.

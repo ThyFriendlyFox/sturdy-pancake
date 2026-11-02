@@ -8,14 +8,24 @@ self.addEventListener("fetch", (e) => {
   if (url.pathname.startsWith("/assets/")) {
     e.respondWith(
       caches.match(e.request).then(
-        (hit) => hit || fetch(e.request).then((r) => { const c = r.clone(); caches.open(CACHE).then((x) => x.put(e.request, c)); return r; }),
+        (hit) =>
+          hit ||
+          fetch(e.request).then((r) => {
+            const c = r.clone();
+            caches.open(CACHE).then((x) => x.put(e.request, c));
+            return r;
+          }),
       ),
     );
     return;
   }
   e.respondWith(
     fetch(e.request)
-      .then((r) => { const c = r.clone(); caches.open(CACHE).then((x) => x.put(e.request, c)); return r; })
+      .then((r) => {
+        const c = r.clone();
+        caches.open(CACHE).then((x) => x.put(e.request, c));
+        return r;
+      })
       .catch(() => caches.match(e.request).then((hit) => hit || caches.match("/"))),
   );
 });

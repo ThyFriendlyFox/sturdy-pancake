@@ -14,7 +14,10 @@ function addVoiceover(src: "ai" | "user", mediaId: string, start: number) {
   const id = uid("vo_");
   editV("add_voiceover", src, { mediaId, start }, (p) => ({
     ...p,
-    voice: { ...p.voice, voiceovers: [...p.voice.voiceovers, { id, mediaId, start: Math.max(0, start), in: 0, out: m.duration, volume: 1 }] },
+    voice: {
+      ...p.voice,
+      voiceovers: [...p.voice.voiceovers, { id, mediaId, start: Math.max(0, start), in: 0, out: m.duration, volume: 1 }],
+    },
   }));
   return `Added voiceover ${id}`;
 }
@@ -42,9 +45,13 @@ function Recorder() {
     }
   };
   return rec ? (
-    <button className="btn danger wide" onClick={() => rec.stop()}>■ Stop recording</button>
+    <button className="btn danger wide" onClick={() => rec.stop()}>
+      ■ Stop recording
+    </button>
   ) : (
-    <button className="btn wide" onClick={start}>🎙 Record voiceover at playhead</button>
+    <button className="btn wide" onClick={start}>
+      🎙 Record voiceover at playhead
+    </button>
   );
 }
 
@@ -56,7 +63,14 @@ function VoicePanel() {
   return (
     <div className="stack">
       <p className="dim small">The sound from your clips plus any voiceovers.</p>
-      <Slider label="Voice volume" min={0} max={2} value={voice.volume} format={(v) => Math.round(v * 100) + "%"} onChange={(v) => set({ volume: v }, "set_voice", true)} />
+      <Slider
+        label="Voice volume"
+        min={0}
+        max={2}
+        value={voice.volume}
+        format={(v) => Math.round(v * 100) + "%"}
+        onChange={(v) => set({ volume: v }, "set_voice", true)}
+      />
       <Toggle label="Mute voice track" value={voice.muted} onChange={(v) => set({ muted: v })} />
       <Recorder />
       <button
@@ -74,7 +88,12 @@ function VoicePanel() {
             <span className="ellipsis">🎙 {media.find((m) => m.id === v.mediaId)?.name}</span>
             <button
               className="btn small danger"
-              onClick={() => editV("remove_voiceover", "user", { id: v.id }, (p) => ({ ...p, voice: { ...p.voice, voiceovers: p.voice.voiceovers.filter((x) => x.id !== v.id) } }))}
+              onClick={() =>
+                editV("remove_voiceover", "user", { id: v.id }, (p) => ({
+                  ...p,
+                  voice: { ...p.voice, voiceovers: p.voice.voiceovers.filter((x) => x.id !== v.id) },
+                }))
+              }
             >
               Remove
             </button>
@@ -86,7 +105,18 @@ function VoicePanel() {
             step={0.05}
             value={v.start}
             format={fmtTime}
-            onChange={(t) => editV("move_voiceover", "user", { id: v.id, start: t }, (p) => ({ ...p, voice: { ...p.voice, voiceovers: p.voice.voiceovers.map((x) => (x.id === v.id ? { ...x, start: t } : x)) } }), true)}
+            onChange={(t) =>
+              editV(
+                "move_voiceover",
+                "user",
+                { id: v.id, start: t },
+                (p) => ({
+                  ...p,
+                  voice: { ...p.voice, voiceovers: p.voice.voiceovers.map((x) => (x.id === v.id ? { ...x, start: t } : x)) },
+                }),
+                true,
+              )
+            }
           />
           <Slider
             label="Volume"
@@ -94,7 +124,18 @@ function VoicePanel() {
             max={2}
             value={v.volume}
             format={(x) => Math.round(x * 100) + "%"}
-            onChange={(n) => editV("set_voiceover_volume", "user", { id: v.id, volume: n }, (p) => ({ ...p, voice: { ...p.voice, voiceovers: p.voice.voiceovers.map((x) => (x.id === v.id ? { ...x, volume: n } : x)) } }), true)}
+            onChange={(n) =>
+              editV(
+                "set_voiceover_volume",
+                "user",
+                { id: v.id, volume: n },
+                (p) => ({
+                  ...p,
+                  voice: { ...p.voice, voiceovers: p.voice.voiceovers.map((x) => (x.id === v.id ? { ...x, volume: n } : x)) },
+                }),
+                true,
+              )
+            }
           />
         </div>
       ))}
@@ -106,7 +147,8 @@ export const voiceComponent: ComponentDef = {
   id: "voice",
   title: "Voice track",
   icon: "🗣",
-  about: "The voice/dialogue audio: the clips' own sound plus recorded or imported voiceovers. Volume, mute, add/move/remove voiceovers. (Pitch is its own component.)",
+  about:
+    "The voice/dialogue audio: the clips' own sound plus recorded or imported voiceovers. Volume, mute, add/move/remove voiceovers. (Pitch is its own component.)",
   tools: [
     {
       name: "set_voice",
@@ -135,7 +177,12 @@ export const voiceComponent: ComponentDef = {
       run: (a) => {
         editV("update_voiceover", "ai", a, (p) => ({
           ...p,
-          voice: { ...p.voice, voiceovers: p.voice.voiceovers.map((x) => (x.id === a.id ? { ...x, start: a.start ?? x.start, volume: a.volume ?? x.volume } : x)) },
+          voice: {
+            ...p.voice,
+            voiceovers: p.voice.voiceovers.map((x) =>
+              x.id === a.id ? { ...x, start: a.start ?? x.start, volume: a.volume ?? x.volume } : x,
+            ),
+          },
         }));
         return "Updated";
       },
@@ -146,7 +193,10 @@ export const voiceComponent: ComponentDef = {
       params: { id: { type: "string" } },
       required: ["id"],
       run: (a) => {
-        editV("remove_voiceover", "ai", a, (p) => ({ ...p, voice: { ...p.voice, voiceovers: p.voice.voiceovers.filter((x) => x.id !== a.id) } }));
+        editV("remove_voiceover", "ai", a, (p) => ({
+          ...p,
+          voice: { ...p.voice, voiceovers: p.voice.voiceovers.filter((x) => x.id !== a.id) },
+        }));
         return "Removed";
       },
     },
@@ -160,11 +210,20 @@ const PITCH_PRESETS = { deep: -5, lower: -2, natural: 0, higher: 2, chipmunk: 7 
 
 function PitchPanel() {
   const pitch = useStore((s) => s.project.voice.pitch);
-  const set = (v: number, merge = false) => editP("set_voice_pitch", "user", { semitones: v }, (p) => ({ ...p, voice: { ...p.voice, pitch: v } }), merge);
+  const set = (v: number, merge = false) =>
+    editP("set_voice_pitch", "user", { semitones: v }, (p) => ({ ...p, voice: { ...p.voice, pitch: v } }), merge);
   const name = (Object.keys(PITCH_PRESETS) as (keyof typeof PITCH_PRESETS)[]).find((k) => PITCH_PRESETS[k] === pitch) ?? null;
   return (
     <div className="stack">
-      <Slider label="Voice pitch" min={-12} max={12} step={0.5} value={pitch} format={(v) => (v > 0 ? "+" : "") + v + " st"} onChange={(v) => set(v, true)} />
+      <Slider
+        label="Voice pitch"
+        min={-12}
+        max={12}
+        step={0.5}
+        value={pitch}
+        format={(v) => (v > 0 ? "+" : "") + v + " st"}
+        onChange={(v) => set(v, true)}
+      />
       <Chips options={Object.keys(PITCH_PRESETS) as (keyof typeof PITCH_PRESETS)[]} value={name} onChange={(k) => set(PITCH_PRESETS[k])} />
       <p className="dim small">Changes how high or low voices sound without changing speed. Press play to hear it.</p>
     </div>
@@ -200,11 +259,14 @@ function MusicPanel() {
   const media = useStore((s) => s.media);
   const songs = media.filter((m) => m.kind === "audio");
   const song = songs.find((m) => m.id === music.mediaId);
-  const set = (patch: Partial<typeof music>, merge = false) => editM("set_music", "user", patch, (p) => ({ ...p, music: { ...p.music, ...patch } }), merge);
+  const set = (patch: Partial<typeof music>, merge = false) =>
+    editM("set_music", "user", patch, (p) => ({ ...p, music: { ...p.music, ...patch } }), merge);
   return (
     <div className="stack">
       <div className="chips scroll">
-        <button className={"chip" + (!music.mediaId ? " on" : "")} onClick={() => set({ mediaId: null })}>No music</button>
+        <button className={"chip" + (!music.mediaId ? " on" : "")} onClick={() => set({ mediaId: null })}>
+          No music
+        </button>
         {songs.map((s) => (
           <button key={s.id} className={"chip" + (s.id === music.mediaId ? " on" : "")} onClick={() => set({ mediaId: s.id })}>
             ♪ {s.name}
@@ -222,10 +284,41 @@ function MusicPanel() {
       </div>
       {song ? (
         <>
-          <Slider label="Start song at" min={0} max={Math.max(0, song.duration - 1)} step={0.1} value={music.offset} format={fmtTime} onChange={(v) => set({ offset: v }, true)} />
-          <Slider label="Music volume" min={0} max={1.5} value={music.volume} format={(v) => Math.round(v * 100) + "%"} onChange={(v) => set({ volume: v }, true)} />
-          <Slider label="Fade in" min={0} max={5} step={0.1} value={music.fadeIn} format={(v) => v.toFixed(1) + "s"} onChange={(v) => set({ fadeIn: v }, true)} />
-          <Slider label="Fade out" min={0} max={5} step={0.1} value={music.fadeOut} format={(v) => v.toFixed(1) + "s"} onChange={(v) => set({ fadeOut: v }, true)} />
+          <Slider
+            label="Start song at"
+            min={0}
+            max={Math.max(0, song.duration - 1)}
+            step={0.1}
+            value={music.offset}
+            format={fmtTime}
+            onChange={(v) => set({ offset: v }, true)}
+          />
+          <Slider
+            label="Music volume"
+            min={0}
+            max={1.5}
+            value={music.volume}
+            format={(v) => Math.round(v * 100) + "%"}
+            onChange={(v) => set({ volume: v }, true)}
+          />
+          <Slider
+            label="Fade in"
+            min={0}
+            max={5}
+            step={0.1}
+            value={music.fadeIn}
+            format={(v) => v.toFixed(1) + "s"}
+            onChange={(v) => set({ fadeIn: v }, true)}
+          />
+          <Slider
+            label="Fade out"
+            min={0}
+            max={5}
+            step={0.1}
+            value={music.fadeOut}
+            format={(v) => v.toFixed(1) + "s"}
+            onChange={(v) => set({ fadeOut: v }, true)}
+          />
           <Toggle label="Lower music under voiceovers" value={music.duck} onChange={(v) => set({ duck: v })} />
         </>
       ) : (
