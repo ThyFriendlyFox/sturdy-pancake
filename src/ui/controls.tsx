@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { motion } from "motion/react";
+import { useId, type ReactNode } from "react";
 import { layout } from "../model";
 import { store, useStore } from "../store";
 import { getEngine } from "../engine";
@@ -25,12 +26,14 @@ export function Slider(props: {
 }
 
 export function Chips<T extends string>(props: { options: readonly T[]; value: T | null; onChange: (v: T) => void; label?: (v: T) => string }) {
+  const id = useId();
   return (
     <div className="chips">
       {props.options.map((o) => (
-        <button key={o} className={"chip" + (o === props.value ? " on" : "")} onClick={() => props.onChange(o)}>
-          {props.label ? props.label(o) : o}
-        </button>
+        <motion.button key={o} className={"chip" + (o === props.value ? " sel" : "")} onClick={() => props.onChange(o)} whileTap={{ scale: 0.92 }}>
+          {o === props.value && <motion.span layoutId={id} className="chip-bg" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
+          <span className="chip-label">{props.label ? props.label(o) : o}</span>
+        </motion.button>
       ))}
     </div>
   );

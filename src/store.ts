@@ -9,6 +9,7 @@ export interface State {
   selectedClipId: string | null;
   time: number;
   playing: boolean;
+  aiFlash: { ids: string[]; at: number }; // components the AI just opened (for a highlight)
 }
 
 const SAVE_KEY = "ck.project.v1";
@@ -31,6 +32,7 @@ let state: State = {
   selectedClipId: null,
   time: 0,
   playing: false,
+  aiFlash: { ids: [], at: 0 },
   ...load(),
 };
 
@@ -124,7 +126,7 @@ export const store = {
   },
   show(ids: string[], source: EventSource) {
     const visible = [...state.visible.filter((v) => !ids.includes(v)), ...ids];
-    state = { ...state, visible };
+    state = { ...state, visible, ...(source === "ai" ? { aiFlash: { ids, at: Date.now() } } : {}) };
     emit();
     ids.forEach((id) => telemetry.log({ kind: "show", source, component: id, turn: currentTurn }));
   },

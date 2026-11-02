@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PROVIDERS, saveSettings, startOpenRouterLogin, type AiSettings, type Provider } from "../ai/settings";
 import { telemetry } from "../telemetry";
+import { Sheet } from "./Sheet";
 
 export function Connect(props: { current: AiSettings | null; onDone: (s: AiSettings | null) => void; onClose?: () => void }) {
   const [provider, setProvider] = useState<Provider>(props.current?.provider ?? "anthropic");
@@ -22,8 +23,8 @@ export function Connect(props: { current: AiSettings | null; onDone: (s: AiSetti
   };
 
   return (
-    <div className="modal">
-      <div className="modal-card stack">
+    <Sheet onClose={() => (props.onClose ? props.onClose() : undefined)}>
+      <div className="stack">
         <div className="row between">
           <h2>Connect an AI</h2>
           {props.onClose && (
@@ -78,6 +79,6 @@ export function Connect(props: { current: AiSettings | null; onDone: (s: AiSetti
           </button>
         )}
       </div>
-    </div>
+    </Sheet>
   );
 }
