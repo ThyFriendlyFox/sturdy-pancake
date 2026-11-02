@@ -30,7 +30,11 @@ function Preview() {
   const addFirst = async () => {
     const ms = await pickFiles();
     const vids = ms.filter((m) => m.kind !== "audio");
-    if (vids.length) store.edit("media", "add_clips", "user", { mediaIds: vids.map((m) => m.id) }, (p) => ({ ...p, clips: [...p.clips, ...vids.map(newClip)] }));
+    if (vids.length)
+      store.edit("media", "add_clips", "user", { mediaIds: vids.map((m) => m.id) }, (p) => ({
+        ...p,
+        clips: [...p.clips, ...vids.map(newClip)],
+      }));
     const song = ms.find((m) => m.kind === "audio");
     if (song) store.edit("media", "use_as_music", "user", { mediaId: song.id }, (p) => ({ ...p, music: { ...p.music, mediaId: song.id } }));
   };
@@ -48,7 +52,11 @@ function Preview() {
             exit={{ opacity: 0, scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
           >
-            <motion.span className="big" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}>
+            <motion.span
+              className="big"
+              animate={{ scale: [1, 1.15, 1] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            >
               ＋
             </motion.span>
             Add videos, photos or music
@@ -68,7 +76,14 @@ function Preview() {
                 </motion.span>
               </AnimatePresence>
             </motion.button>
-            <input type="range" min={0} max={Math.max(dur, 0.01)} step={0.01} value={time} onChange={(e) => getEngine()?.seek(+e.target.value)} />
+            <input
+              type="range"
+              min={0}
+              max={Math.max(dur, 0.01)}
+              step={0.01}
+              value={time}
+              onChange={(e) => getEngine()?.seek(+e.target.value)}
+            />
             <span className="mono small">
               {fmtTime(time)}/{fmtTime(dur)}
             </span>
@@ -102,7 +117,13 @@ const Card = forwardRef<HTMLElement, { id: string }>(function Card({ id }, ref) 
         />
       )}
       <motion.header layout="position">
-        <motion.span className="card-icon" key={flashAt} initial={flashAt ? { rotate: -20, scale: 1.4 } : false} animate={{ rotate: 0, scale: 1 }} transition={spring}>
+        <motion.span
+          className="card-icon"
+          key={flashAt}
+          initial={flashAt ? { rotate: -20, scale: 1.4 } : false}
+          animate={{ rotate: 0, scale: 1 }}
+          transition={spring}
+        >
           {c.icon}
         </motion.span>
         <b>{c.title}</b>
@@ -111,7 +132,12 @@ const Card = forwardRef<HTMLElement, { id: string }>(function Card({ id }, ref) 
             ✦ AI
           </motion.span>
         )}
-        <motion.button className="icon-btn" onClick={() => store.hide([id], "user")} aria-label="Close" whileTap={{ scale: 0.8, rotate: 90 }}>
+        <motion.button
+          className="icon-btn"
+          onClick={() => store.hide([id], "user")}
+          aria-label="Close"
+          whileTap={{ scale: 0.8, rotate: 90 }}
+        >
           ✕
         </motion.button>
       </motion.header>
@@ -133,7 +159,14 @@ function Dock() {
     <div className="dock" ref={ref}>
       <AnimatePresence mode="popLayout">
         {!visible.length && (
-          <motion.div key="empty" layout className="dock-empty dim small" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div
+            key="empty"
+            layout
+            className="dock-empty dim small"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             Tools appear here when you need them. Ask the AI, or tap ☰ to open one yourself.
           </motion.div>
         )}
@@ -155,7 +188,12 @@ function Toolbox({ onClose }: { onClose: () => void }) {
           ✕
         </button>
       </div>
-      <motion.div className="grid" initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.025, delayChildren: 0.08 } } }}>
+      <motion.div
+        className="grid"
+        initial="hidden"
+        animate="show"
+        variants={{ show: { transition: { staggerChildren: 0.025, delayChildren: 0.08 } } }}
+      >
         {COMPONENTS.map((c) => {
           const on = visible.includes(c.id);
           return (

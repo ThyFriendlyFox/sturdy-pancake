@@ -14,7 +14,12 @@ export const PROVIDERS: Record<Provider, { label: string; keyUrl: string; models
     keyHint: "sk-ant-…",
   },
   openai: { label: "OpenAI", keyUrl: "https://platform.openai.com/api-keys", models: ["gpt-5-mini", "gpt-5"], keyHint: "sk-…" },
-  gemini: { label: "Google Gemini", keyUrl: "https://aistudio.google.com/apikey", models: ["gemini-flash-latest", "gemini-pro-latest"], keyHint: "AIza…" },
+  gemini: {
+    label: "Google Gemini",
+    keyUrl: "https://aistudio.google.com/apikey",
+    models: ["gemini-flash-latest", "gemini-pro-latest"],
+    keyHint: "AIza…",
+  },
   openrouter: {
     label: "OpenRouter (sign in with Google, GitHub…)",
     keyUrl: "https://openrouter.ai/keys",

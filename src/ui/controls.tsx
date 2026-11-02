@@ -25,13 +25,25 @@ export function Slider(props: {
   );
 }
 
-export function Chips<T extends string>(props: { options: readonly T[]; value: T | null; onChange: (v: T) => void; label?: (v: T) => string }) {
+export function Chips<T extends string>(props: {
+  options: readonly T[];
+  value: T | null;
+  onChange: (v: T) => void;
+  label?: (v: T) => string;
+}) {
   const id = useId();
   return (
     <div className="chips">
       {props.options.map((o) => (
-        <motion.button key={o} className={"chip" + (o === props.value ? " sel" : "")} onClick={() => props.onChange(o)} whileTap={{ scale: 0.92 }}>
-          {o === props.value && <motion.span layoutId={id} className="chip-bg" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
+        <motion.button
+          key={o}
+          className={"chip" + (o === props.value ? " sel" : "")}
+          onClick={() => props.onChange(o)}
+          whileTap={{ scale: 0.92 }}
+        >
+          {o === props.value && (
+            <motion.span layoutId={id} className="chip-bg" transition={{ type: "spring", stiffness: 500, damping: 38 }} />
+          )}
           <span className="chip-label">{props.label ? props.label(o) : o}</span>
         </motion.button>
       ))}

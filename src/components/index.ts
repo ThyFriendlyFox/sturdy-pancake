@@ -57,7 +57,8 @@ const coreTools: ToolDef[] = [
   },
   {
     name: "get_state",
-    description: "Get the current project (clips, tracks, text, effects, playhead) as JSON. Call after edits if you need fresh ids or timings.",
+    description:
+      "Get the current project (clips, tracks, text, effects, playhead) as JSON. Call after edits if you need fresh ids or timings.",
     params: {},
     run: () => JSON.stringify(store.snapshot()),
   },

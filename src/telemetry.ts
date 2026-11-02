@@ -33,11 +33,13 @@ function writeLS(k: string, v: string) {
   }
 }
 
-const userId = readLS(KEY_UID) ?? (() => {
-  const id = crypto.randomUUID();
-  writeLS(KEY_UID, id);
-  return id;
-})();
+const userId =
+  readLS(KEY_UID) ??
+  (() => {
+    const id = crypto.randomUUID();
+    writeLS(KEY_UID, id);
+    return id;
+  })();
 const sessionId = crypto.randomUUID();
 
 let queue: EditEvent[] = [];
@@ -65,9 +67,7 @@ function flush(useBeacon = false) {
     if (useBeacon && navigator.sendBeacon) {
       navigator.sendBeacon("/api/events", new Blob([body], { type: "application/json" }));
     } else {
-      void fetch("/api/events", { method: "POST", headers: { "content-type": "application/json" }, body, keepalive: true }).catch(
-        () => {},
-      );
+      void fetch("/api/events", { method: "POST", headers: { "content-type": "application/json" }, body, keepalive: true }).catch(() => {});
     }
   } catch {
     /* ignore */

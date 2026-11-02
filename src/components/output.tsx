@@ -16,9 +16,19 @@ function FormatPanel() {
   const bg = useStore((s) => s.project.background);
   return (
     <div className="stack">
-      <Chips options={ASPECTS} value={aspect} label={(a) => ASPECT_LABEL[a]} onChange={(a) => editF("set_aspect", "user", { aspect: a }, (p) => ({ ...p, aspect: a }))} />
+      <Chips
+        options={ASPECTS}
+        value={aspect}
+        label={(a) => ASPECT_LABEL[a]}
+        onChange={(a) => editF("set_aspect", "user", { aspect: a }, (p) => ({ ...p, aspect: a }))}
+      />
       <label className="color">
-        Background <input type="color" value={bg} onChange={(e) => editF("set_background", "user", { color: e.target.value }, (p) => ({ ...p, background: e.target.value }), true)} />
+        Background{" "}
+        <input
+          type="color"
+          value={bg}
+          onChange={(e) => editF("set_background", "user", { color: e.target.value }, (p) => ({ ...p, background: e.target.value }), true)}
+        />
       </label>
     </div>
   );

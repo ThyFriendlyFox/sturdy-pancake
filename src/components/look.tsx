@@ -7,9 +7,17 @@ const editT = editFor("transitions");
 const TYPES: TransitionType[] = ["none", "fade", "dip-black", "slide-left", "slide-up", "zoom", "wipe"];
 
 function setTransition(src: "ai" | "user", ids: string[], type?: TransitionType, duration?: number, merge = false) {
-  editT("set_transition", src, { ids, type, duration }, (p) =>
-    mapClips(p, ids, (c) => ({ ...c, transition: { type: type ?? c.transition.type, duration: clamp(duration ?? c.transition.duration, 0.1, 2) } })),
-  merge);
+  editT(
+    "set_transition",
+    src,
+    { ids, type, duration },
+    (p) =>
+      mapClips(p, ids, (c) => ({
+        ...c,
+        transition: { type: type ?? c.transition.type, duration: clamp(duration ?? c.transition.duration, 0.1, 2) },
+      })),
+    merge,
+  );
 }
 
 function TransitionsPanel() {
@@ -21,7 +29,15 @@ function TransitionsPanel() {
       <ClipPicker />
       {active.index === 0 && <p className="dim small">The first clip has nothing before it; transitions play into clips 2 and later.</p>}
       <Chips options={TYPES} value={c.transition.type} onChange={(t) => setTransition("user", [c.id], t)} />
-      <Slider label="Length" min={0.1} max={2} step={0.05} value={c.transition.duration} format={(v) => v.toFixed(2) + "s"} onChange={(v) => setTransition("user", [c.id], undefined, v, true)} />
+      <Slider
+        label="Length"
+        min={0.1}
+        max={2}
+        step={0.05}
+        value={c.transition.duration}
+        format={(v) => v.toFixed(2) + "s"}
+        onChange={(v) => setTransition("user", [c.id], undefined, v, true)}
+      />
       <button className="btn small" onClick={() => setTransition("user", resolveClips("all"), c.transition.type, c.transition.duration)}>
         Use on every clip
       </button>
@@ -64,12 +80,23 @@ function ColorPanel() {
   const c = active.clip;
   const f = c.filters;
   const s = (k: keyof Filters, label: string, min: number, max: number, fmt?: (v: number) => string) => (
-    <Slider label={label} min={min} max={max} value={f[k]} format={fmt} onChange={(v) => setFilters("user", "set_filters", [c.id], { [k]: v }, true)} />
+    <Slider
+      label={label}
+      min={min}
+      max={max}
+      value={f[k]}
+      format={fmt}
+      onChange={(v) => setFilters("user", "set_filters", [c.id], { [k]: v }, true)}
+    />
   );
   return (
     <div className="stack">
       <ClipPicker />
-      <Chips options={PRESETS} value={null} onChange={(k) => setFilters("user", "apply_look", [c.id], { ...defaultFilters(), ...FILTER_PRESETS[k] })} />
+      <Chips
+        options={PRESETS}
+        value={null}
+        onChange={(k) => setFilters("user", "apply_look", [c.id], { ...defaultFilters(), ...FILTER_PRESETS[k] })}
+      />
       {s("brightness", "Brightness", 0.3, 2)}
       {s("contrast", "Contrast", 0.3, 2)}
       {s("saturation", "Saturation", 0, 3)}
@@ -77,8 +104,12 @@ function ColorPanel() {
       {s("sepia", "Warmth (sepia)", 0, 1)}
       {s("blur", "Blur", 0, 20, (v) => v.toFixed(1) + "px")}
       <Row>
-        <button className="btn small" onClick={() => setFilters("user", "set_filters", resolveClips("all"), f)}>Copy to all clips</button>
-        <button className="btn small" onClick={() => setFilters("user", "set_filters", [c.id], defaultFilters())}>Reset</button>
+        <button className="btn small" onClick={() => setFilters("user", "set_filters", resolveClips("all"), f)}>
+          Copy to all clips
+        </button>
+        <button className="btn small" onClick={() => setFilters("user", "set_filters", [c.id], defaultFilters())}>
+          Reset
+        </button>
       </Row>
     </div>
   );
@@ -103,7 +134,8 @@ export const colorComponent: ComponentDef = {
     },
     {
       name: "set_filters",
-      description: "Set individual color values on clips. brightness/contrast 0.3-2 (1=normal), saturation 0-3, hue -180..180, sepia 0-1, blur 0-20.",
+      description:
+        "Set individual color values on clips. brightness/contrast 0.3-2 (1=normal), saturation 0-3, hue -180..180, sepia 0-1, blur 0-20.",
       params: {
         target: clipTarget,
         brightness: { type: "number" },

@@ -7,7 +7,14 @@ export const spring = { type: "spring", stiffness: 420, damping: 34, mass: 0.8 }
 export function Sheet({ onClose, children }: { onClose: () => void; children: ReactNode }) {
   const drag = useDragControls();
   return (
-    <motion.div className="modal" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+    <motion.div
+      className="modal"
+      onClick={onClose}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18 }}
+    >
       <motion.div
         className="modal-card"
         onClick={(e) => e.stopPropagation()}

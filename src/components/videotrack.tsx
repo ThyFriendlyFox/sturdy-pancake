@@ -44,14 +44,44 @@ function Panel() {
     <div className="stack">
       <ClipPicker />
       <div className="row">
-        <button className="btn small" disabled={i === 0} onClick={() => ops.move("user", c.id, i - 1)}>← Move</button>
-        <button className="btn small" disabled={i === clips.length - 1} onClick={() => ops.move("user", c.id, i + 1)}>Move →</button>
-        <button className="btn small" onClick={() => ops.duplicate("user", c.id)}>Duplicate</button>
-        <button className="btn small danger" onClick={() => ops.remove("user", [c.id])}>Delete</button>
+        <button className="btn small" disabled={i === 0} onClick={() => ops.move("user", c.id, i - 1)}>
+          ← Move
+        </button>
+        <button className="btn small" disabled={i === clips.length - 1} onClick={() => ops.move("user", c.id, i + 1)}>
+          Move →
+        </button>
+        <button className="btn small" onClick={() => ops.duplicate("user", c.id)}>
+          Duplicate
+        </button>
+        <button className="btn small danger" onClick={() => ops.remove("user", [c.id])}>
+          Delete
+        </button>
       </div>
-      <Slider label="Speed" min={0.25} max={4} step={0.05} value={c.speed} format={(v) => v.toFixed(2) + "×"} onChange={(v) => ops.set("user", "set_clip_speed", [c.id], { speed: v }, true)} />
-      <Slider label="Clip volume" min={0} max={2} value={c.volume} format={(v) => Math.round(v * 100) + "%"} onChange={(v) => ops.set("user", "set_clip_volume", [c.id], { volume: v }, true)} />
-      <Slider label="Zoom / crop" min={1} max={3} value={c.zoom} format={(v) => v.toFixed(2) + "×"} onChange={(v) => ops.set("user", "set_clip_zoom", [c.id], { zoom: v }, true)} />
+      <Slider
+        label="Speed"
+        min={0.25}
+        max={4}
+        step={0.05}
+        value={c.speed}
+        format={(v) => v.toFixed(2) + "×"}
+        onChange={(v) => ops.set("user", "set_clip_speed", [c.id], { speed: v }, true)}
+      />
+      <Slider
+        label="Clip volume"
+        min={0}
+        max={2}
+        value={c.volume}
+        format={(v) => Math.round(v * 100) + "%"}
+        onChange={(v) => ops.set("user", "set_clip_volume", [c.id], { volume: v }, true)}
+      />
+      <Slider
+        label="Zoom / crop"
+        min={1}
+        max={3}
+        value={c.zoom}
+        format={(v) => v.toFixed(2) + "×"}
+        onChange={(v) => ops.set("user", "set_clip_zoom", [c.id], { zoom: v }, true)}
+      />
     </div>
   );
 }

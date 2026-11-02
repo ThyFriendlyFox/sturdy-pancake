@@ -16,7 +16,10 @@ export async function POST(req: Request) {
   const events = Array.isArray(body.events) ? body.events.slice(0, 500) : [];
   if (!events.length) return new Response(null, { status: 204 });
 
-  const safeId = (s: unknown) => String(s ?? "anon").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 40) || "anon";
+  const safeId = (s: unknown) =>
+    String(s ?? "anon")
+      .replace(/[^a-zA-Z0-9-]/g, "")
+      .slice(0, 40) || "anon";
   const meta = { userId: safeId(body.userId), sessionId: safeId(body.sessionId), ua: String(body.ua ?? "").slice(0, 200) };
   const lines = events.map((e) => JSON.stringify({ ...meta, ...(e as object) })).join("\n") + "\n";
 
