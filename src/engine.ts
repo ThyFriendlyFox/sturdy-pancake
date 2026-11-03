@@ -127,6 +127,15 @@ export class Engine {
   }
 
   /** Call from a tap handler so iOS lets media play later. */
+  /** Wake videos that have no frame yet (iPhone after a reload). Call from a tap. Muted, so nothing is heard. */
+  prime() {
+    for (const [id, v] of this.videos) {
+      if (v.readyState >= 2) continue;
+      const pl = layout(this.project).find((x) => x.clip.id === id);
+      void primeFrame(v, pl ? sourceTime(pl, Math.max(this.t, pl.start)) : undefined).then(this.invalidate, this.invalidate);
+    }
+  }
+
   async unlock() {
     for (const v of this.videos.values()) v.muted = false;
     await this.ensureAudio();

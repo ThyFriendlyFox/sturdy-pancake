@@ -10,6 +10,7 @@ behavior change. The weekly cycle (WEEKLY.md step 5) refreshes it.
 | Speed (4× CPU throttle, 31 MB 1080p clip) | 🚧 | Paused: 60 fps, 0 ms blocked (was 6 fps, 2.9 s per 3 s). Playing: 15 fps (was 5); the rest is software video decoding in the test browser. Not measured on a phone |
 | Desktop layout (3 panes at ≥1000 px) | ✅ | Playwright at 1440×900: 3 panes update together; back to swiping at 390 px |
 | Video-first screen, tap menu, 3-screen swipe | ✅ | `e2e/magic.cjs`, 0 errors: empty-screen tap shows Add clips; swipes move 1 screen each (−780, −780, −390, 0, 0); forced scroll stays 0. Not checked on a real iPhone |
+| iPhone memory during cut-outs | 🚧 | Light mode (WASM, 8-bit weights) on iPhone, tensors freed per frame, crash guard tested by simulation (1 crash → light mode, 2 → off). The human's recording showed a crash on tap; not re-checked on a real iPhone |
 | iPhone video drawing | 🚧 | Hidden videos are now in the page, muted, playsinline and primed with play-then-pause. Fixes the black video in the human's recording in theory; needs a real-iPhone check |
 | Tap to isolate (SlimSAM, in the browser) | ✅ | Same run: dog isolated 33 s after the tap, model download included (CPU, no GPU) |
 | Follow through the clip | 🚧 | Works: 3.5 s clip followed in 150 s on a 2-core CPU without WebGPU. Too slow without WebGPU; not timed on a phone |
@@ -31,5 +32,5 @@ States: ✅ done (gated) · 🚧 in progress · ❌ not started · 🧊 frozen/w
 ## Current week
 
 - **Shipping:** between cycles — next is ROADMAP item 1, browser end-to-end gate
-- **Last release:** 0.4.0 (untagged) — 2026-11-03, live at https://cutkit-amber.vercel.app
+- **Last release:** 0.4.1 (untagged) — 2026-11-03, live at https://cutkit-amber.vercel.app
 - **Known red:** none. GitHub's default branch is still `claude/cutkit`; the human switches it to `main`.

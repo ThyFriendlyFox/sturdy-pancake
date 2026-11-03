@@ -34,7 +34,8 @@ At first start, no AI is connected and the project is empty. A damaged localStor
 | Max edit-data request | `api/events.ts` | 256 KB, 500 events |
 | Undo depth | `src/store.ts` | 100 |
 | Export bitrate | `src/engine.ts` | 8 Mbit/s, 30 fps |
-| Segmentation model | `src/segment/worker.ts` `MODEL` | `Xenova/slimsam-77-uniform`; WebGPU fp32 if an adapter exists, else WASM q8 |
+| Segmentation model | `src/segment/worker.ts` `MODEL` | `Xenova/slimsam-77-uniform`; WebGPU fp32 if an adapter exists, else WASM q8. iPhone, or after 1 crash: always WASM q8. After 2 crashes: off |
+| `ck.segBusy`, `ck.segCrashes` | localStorage | set during a model run; crash count on this device |
 | Frame size sent to the model | `src/subjects.ts` `GRAB_SIDE` | 512 px long side |
 | Follow step | `src/subjects.ts` `FOLLOW_STEP` | 0.4 s |
 | Mask reach | `src/subjects.ts` `MAX_GAP` | 0.3 s; no mask closer than this means no effect drawn |

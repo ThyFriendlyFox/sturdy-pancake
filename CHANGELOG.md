@@ -5,6 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-03
+### Fixed
+- Tapping the video on iPhone could crash and reload the page: cutting a thing out used too much memory. iPhone now uses a lighter model setup, and each frame's working memory is freed at once.
+- After a crash during a cut-out, the app says what happened and switches to the lighter setup. After a second crash it turns cut-outs off; tapping still opens the menu and listens.
+- After a reload on iPhone, the video showed black. Now it says "Tap to show your video", and that tap brings the picture back.
+
 ## [0.4.0] - 2026-11-03
 ### Changed
 - Tap to talk: tapping the video opens the paw menu and listens at once. Listening stops by itself when you stop talking. Tap the paw's center to stop early.

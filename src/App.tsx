@@ -4,7 +4,8 @@ import { Agent } from "./ai/agent";
 import { session } from "./ai/session";
 import { finishOpenRouterLogin, loadSettings, type AiSettings } from "./ai/settings";
 import { restoreMedia } from "./media";
-import { restoreSubjects } from "./subjects";
+import { checkLastCrash, restoreSubjects } from "./subjects";
+import { store } from "./store";
 import { Connect } from "./ui/Connect";
 import { Pager } from "./ui/Pager";
 import { TalkScreen } from "./ui/TalkScreen";
@@ -22,6 +23,8 @@ export function App() {
   }, [agent]);
 
   useEffect(() => {
+    const crashed = checkLastCrash();
+    if (crashed) store.toast(crashed);
     restoreMedia()
       .then(() => restoreSubjects())
       .then(() => force((n) => n + 1));

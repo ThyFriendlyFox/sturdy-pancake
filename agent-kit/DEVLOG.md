@@ -41,6 +41,14 @@ Evidence: <commit / tag / gate run / screenshot>
 
 <!-- Entries below, newest first. -->
 
+## 2026-11-03 — Tapping crashed the page on iPhone (0.4.1)
+
+The human's recording showed a tap on the cat, then a black and a white screen, then the page reloaded with a black video. That is iOS killing a page that uses too much memory. The likely cause is the cut-out model: on iPhone it ran on WebGPU with 32-bit weights, and tensors were not freed between frames.
+
+Now iPhone uses WASM with 8-bit weights, and the worker frees every tensor after each frame. A flag set around each model run detects a crash on the next load: the app says what happened, switches to the light mode, and after a second crash turns cut-outs off. After a reload, iPhone does not draw a video before a tap, so the screen now says "Tap to show your video" and that tap only wakes the video. I could not run this on an iPhone; the crash guard was tested by simulating the flag.
+
+Evidence: crash-guard run (1 → light mode, 2 → off, tap still opens the menu); `e2e/magic.cjs`, 0 errors; `npm run verify` green.
+
 ## 2026-11-03 — iPhone fixes and tap-to-talk (0.4.0)
 
 The human sent an iPhone screen recording. The video was black, the 3 screens sat off-center, swipes jumped or did nothing, and "Listening" never ended. They asked to remove the corner paw, to make the tap that opens the menu also start the voice, and to keep Add clips reachable with no video.

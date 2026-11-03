@@ -53,6 +53,46 @@ export function useSubjectStatus(id: string | null): SubjectStatus | null {
   );
 }
 
+// ---------- crash guard ----------
+// iOS kills a page that uses too much memory and reloads it. A flag set around each model run tells the next
+// load that the last run never finished: then we switch to the light model, and after a second crash stop.
+const BUSY = "ck.segBusy",
+  CRASHES = "ck.segCrashes";
+const ls = {
+  get: (k: string) => {
+    try {
+      return localStorage.getItem(k);
+    } catch {
+      return null;
+    }
+  },
+  set: (k: string, v: string | null) => {
+    try {
+      if (v === null) localStorage.removeItem(k);
+      else localStorage.setItem(k, v);
+    } catch {
+      /* private mode */
+    }
+  },
+};
+export const isIPhone = () =>
+  /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const crashes = () => Number(ls.get(CRASHES) ?? 0);
+/** Cut-outs are off after 2 crashes on this device. */
+export const cutoutsOff = () => crashes() >= 2;
+const lightMode = () => isIPhone() || crashes() >= 1;
+
+/** Call once at start. Returns a message to show when the last session crashed during a cut-out. */
+export function checkLastCrash(): string | null {
+  if (!ls.get(BUSY)) return null;
+  ls.set(BUSY, null);
+  const n = crashes() + 1;
+  ls.set(CRASHES, String(n));
+  return n >= 2
+    ? "Cutting things out ran this phone out of memory twice, so it is off. Tap still opens the menu and listens."
+    : "Cutting that out ran this phone out of memory and the page reloaded. It now uses a lighter mode.";
+}
+
 // ---------- model worker ----------
 let modelProgress = 0; // download, 0..1
 let modelReady = false;
@@ -90,7 +130,8 @@ let warming = false;
 export function warmup() {
   if (warming) return;
   warming = true;
-  void call({ type: "warmup" }).then((r) => {
+  if (cutoutsOff()) return;
+  void call({ type: "warmup", light: lightMode() }).then((r) => {
     modelReady = r.ok;
     emit();
   });
@@ -133,7 +174,9 @@ function grabImage(mediaId: string): Promise<HTMLCanvasElement> {
 
 async function segmentFrame(frame: HTMLCanvasElement, point: [number, number]) {
   const rgba = frame.getContext("2d", { willReadFrequently: true })!.getImageData(0, 0, frame.width, frame.height).data;
-  const r = await call({ type: "segment", rgba, width: frame.width, height: frame.height, point }, [rgba.buffer]);
+  ls.set(BUSY, String(Date.now()));
+  const r = await call({ type: "segment", rgba, width: frame.width, height: frame.height, point, light: lightMode() }, [rgba.buffer]);
+  ls.set(BUSY, null);
   if (!r.ok || !r.mask) throw new Error(r.error ?? "Segmentation failed");
   if (!modelReady) {
     modelReady = true;
@@ -174,6 +217,7 @@ function cutout(frame: HTMLCanvasElement, mask: HTMLCanvasElement) {
  * `point` is 0..1 of the source frame. Returns the new layer id, or throws.
  */
 export async function isolate(clipId: string, t: number, point: [number, number], source: EventSource, name = "Subject"): Promise<string> {
+  if (cutoutsOff()) throw new Error("Cutting things out is off on this phone (it ran out of memory).");
   const clip = store.get().project.clips.find((c) => c.id === clipId);
   if (!clip) throw new Error("No such clip");
   const media = store.get().media.find((m) => m.id === clip.mediaId);

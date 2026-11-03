@@ -69,6 +69,7 @@ Requires Node.js 20 or newer.
 | `backdrop-filter` over the video | It re-blurs on every video frame. Use solid translucent fills on overlays. |
 | Media save | Files save in 4 MB pieces after the clip shows. A half-saved file has no `id` record, so it is never read back as whole. |
 | Swipes | `src/ui/Pager.tsx` handles pointer events directly and counts a cancelled pointer by its last position. Motion's drag dropped swipes on a busy page, and browsers cancel pointers for text selection and scrolling. |
+| Memory on iPhone | iOS kills a page that uses too much memory and reloads it. The model runs in light mode on iPhone, frees tensors per frame, and `ck.segBusy` detects a crash on the next load. Test new heavy work against this. |
 | Mic on iPhone | Start listening inside the tap handler, before any `await`. iPhone allows the microphone only from the tap. |
 | Editing tests with Python string replace | Prettier reflows lines, so a replace can silently match nothing. Assert the old text is present. |
 | `scrollIntoView` | It scrolls every ancestor, including the 3-screen strip, which then slides to another screen. Scroll the list element itself. |

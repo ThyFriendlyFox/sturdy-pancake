@@ -110,7 +110,10 @@ function Toast() {
   const toast = useStore((s) => s.toast);
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => store.get().toast === toast && store.set({ toast: null }), toast.undo ? 5000 : 3500);
+    const t = setTimeout(
+      () => store.get().toast === toast && store.set({ toast: null }),
+      toast.undo ? 5000 : Math.max(3500, toast.text.length * 60),
+    );
     return () => clearTimeout(t);
   }, [toast]);
   return (
@@ -234,8 +237,22 @@ function FindingLabel() {
   );
 }
 
+/** True while clips exist but the one under the playhead has no frame to show (iPhone before the first tap). */
+function useNoFrame() {
+  const has = useStore((s) => s.project.clips.length > 0);
+  const [noFrame, setNoFrame] = useState(false);
+  useEffect(() => {
+    if (!has) return setNoFrame(false);
+    const t = setInterval(() => setNoFrame(!getEngine()?.hasFrame()), 500);
+    return () => clearInterval(t);
+  }, [has]);
+  return noFrame;
+}
+
 function TapHint() {
-  const show = useStore((s) => s.project.subjects.length === 0 && !s.radial && !s.listening && s.visible.length === 0);
+  const noFrame = useNoFrame();
+  const idle = useStore((s) => s.project.subjects.length === 0 && !s.radial && !s.listening && s.visible.length === 0);
+  const show = noFrame || idle;
   return (
     <AnimatePresence>
       {show && (
@@ -246,7 +263,7 @@ function TapHint() {
           exit={{ opacity: 0, transition: { duration: 0 } }}
           transition={{ delay: 0.6 }}
         >
-          Tap anything and say what to change
+          {noFrame ? "Tap to show your video" : "Tap anything and say what to change"}
         </motion.div>
       )}
     </AnimatePresence>
@@ -286,6 +303,11 @@ export function VideoScreen() {
     const box = root.current!.getBoundingClientRect();
     const at = { x: clientX - box.left, y: clientY - box.top };
     const open = (subjectId: string | null, finding: boolean) => store.set({ radial: { ...at, subjectId, finding } });
+    // No frame yet (iPhone after a reload): this tap only wakes the video.
+    if (!empty && !e.hasFrame()) {
+      e.prime();
+      return;
+    }
     if (empty) {
       open(null, false);
       setPendingSubject(Promise.resolve(null));

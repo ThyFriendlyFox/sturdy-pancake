@@ -23,12 +23,16 @@ function onProgress(p: { status: string; file?: string; loaded?: number; total?:
   (self as unknown as Worker).postMessage({ id: 0, ok: true, progress: a / b });
 }
 
-function load() {
+/**
+ * `light`: WASM with 8-bit weights only. Used on iPhone and after a crash: WebGPU with 32-bit weights used
+ * enough memory for iOS to kill the page.
+ */
+function load(light: boolean) {
   ready ??= (async () => {
     const processor = await AutoProcessor.from_pretrained(MODEL, { progress_callback: onProgress });
     // Some browsers expose navigator.gpu but have no usable adapter (no GPU, blocklisted driver).
     const gpu = (navigator as Navigator & { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
-    const hasGpu = !!gpu && !!(await gpu.requestAdapter().catch(() => null));
+    const hasGpu = !light && !!gpu && !!(await gpu.requestAdapter().catch(() => null));
     if (hasGpu) {
       try {
         const model = await SamModel.from_pretrained(MODEL, { device: "webgpu", dtype: "fp32", progress_callback: onProgress });
@@ -50,6 +54,7 @@ export interface SegmentRequest {
   width?: number;
   height?: number;
   point?: [number, number]; // 0..1
+  light?: boolean;
 }
 
 export interface SegmentResponse {
@@ -70,7 +75,7 @@ self.onmessage = async (e: MessageEvent<SegmentRequest>) => {
   const post = (r: Omit<SegmentResponse, "id">, transfer: Transferable[] = []) =>
     (self as unknown as Worker).postMessage({ id: req.id, ...r }, transfer);
   try {
-    const { model, processor, device } = await load();
+    const { model, processor, device } = await load(!!req.light);
     if (req.type === "warmup") return post({ ok: true, device });
     const t0 = performance.now();
     const w = req.width!,
@@ -87,6 +92,9 @@ self.onmessage = async (e: MessageEvent<SegmentRequest>) => {
     const [, H, W] = m.dims as number[];
     const raw = new Uint8Array(W * H);
     for (let i = 0; i < W * H; i++) raw[i] = m.data[best * W * H + i] ? 255 : 0;
+    // Free tensors now, not at the next GC: on WebGPU they hold GPU memory, and each frame allocates more.
+    for (const t of [...Object.values(inputs), ...Object.values(out), ...masks.flat()])
+      (t as { dispose?: () => void } | undefined)?.dispose?.();
     const mask = largestComponent(raw, W, H);
     post({ ok: true, mask, width: W, height: H, score: scores[best], device, ms: Math.round(performance.now() - t0) }, [mask.buffer]);
   } catch (err) {
