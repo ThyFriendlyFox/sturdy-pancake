@@ -44,11 +44,11 @@ Requires Node.js 20 or newer.
 10. **Masks stay out of the project.** A subject layer holds its tap point
    and effects; masks live in `src/subjects.ts` and IndexedDB `ck-masks`.
    Edit data never carries frames or masks.
+11. **The model runs in the worker.** Nothing on the main thread waits on
+   SlimSAM; the UI shows progress instead.
 12. **The engine draws only when something changed while paused.** A
    change to the picture must reach the engine: through the store, a media
    element event, or `engine.invalidate()`.
-11. **The model runs in the worker.** Nothing on the main thread waits on
-   SlimSAM; the UI shows progress instead.
 
 ## Landmine map
 
