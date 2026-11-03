@@ -1,4 +1,4 @@
-// One conversation shared by the talk screen and the hold-to-talk paw on the video screen.
+// One conversation shared by the talk screen and tap-to-talk on the video screen.
 import { useSyncExternalStore } from "react";
 import { store } from "../store";
 import type { Agent } from "./agent";

@@ -12,14 +12,14 @@ CutKit is a single-page web app (React + TypeScript, built with Vite) that edits
 | AI | `src/ai/` | Provider settings, OpenRouter sign-in, system prompt, tool loop. |
 | UI shell | `src/App.tsx`, `src/ui/`, `src/styles.css` | 3 screens (Tracks, Video, Talk): swiped on a phone, side by side at ≥1000 px; paw menus, floating component card, sheets. Motion animations. |
 | Subjects | `src/subjects.ts`, `src/segment/` | Tap → cut-out (SlimSAM in a worker) → follow through the clip. Masks on the device. |
-| Voice and examples | `src/voice.ts`, `src/speech/`, `src/examples.ts`, `src/beats.ts` | Hold-to-talk: the browser's speech recognition, else recording plus Whisper in a worker; example video analysis (shots, tempo, contact sheet). |
+| Voice and examples | `src/voice.ts`, `src/speech/`, `src/examples.ts`, `src/beats.ts` | Tap-to-talk that stops on silence: the browser's speech recognition, else recording plus Whisper in a worker; example video analysis (shots, tempo, contact sheet). |
 | Edit data | `src/telemetry.ts`, `api/events.ts` | Batches edit events in the browser; the function writes them to Vercel Blob. |
 
 ## Data flow
 
 One chat request, from typed words to a changed video:
 
-1. The user holds the paw and speaks (`src/voice.ts`), or types on the talk screen. `session.ask()` calls `Agent.send()`, adding the tapped subject if there is one.
+1. The user taps the video, which opens the paw menu and starts listening (`src/voice.ts`), or types on the talk screen. `session.ask()` calls `Agent.send()`, adding the tapped subject if there is one.
 2. `Agent` adds `<editor_state>` (from `store.snapshot()`) to the message and sends it with every tool in `ALL_TOOLS` to the provider.
 3. The model answers with tool calls. `runTool()` finds each tool and calls its `run()`.
 4. The tool calls an op that calls `store.edit(component, tool, "ai", args, fn)`. The store pushes undo history, saves to localStorage and logs an `edit` event.

@@ -26,7 +26,7 @@ Requires Node.js 20 or newer.
    the same op functions; only the `source` argument differs (`"user"` /
    `"ai"`). Register it in `src/components/index.ts`; the AI sees it
    automatically. See `docs/COMPONENTS.md`.
-3. **All components start hidden.** Only the user (paw, Tracks, ✕, swipe
+3. **All components start hidden.** Only the user (paw menu, Tracks, ✕, swipe
    down) or the AI (`show_components` / `hide_components`) changes `visible`.
    The newest visible component is the floating card.
 4. **`src/model.ts` is pure.** Plain JSON data and math. No DOM, no
@@ -49,6 +49,9 @@ Requires Node.js 20 or newer.
 12. **The engine draws only when something changed while paused.** A
    change to the picture must reach the engine: through the store, a media
    element event, or `engine.invalidate()`.
+13. **Every hidden video comes from `src/videoEl.ts`.** In the page, muted,
+   playsinline, primed with play-then-pause. iPhone loads and draws nothing
+   else.
 
 ## Landmine map
 
@@ -65,6 +68,9 @@ Requires Node.js 20 or newer.
 | `ctx.filter` | Any filter string, even all-1 values, forces a slow canvas path. `filterCss()` returns "none" for untouched clips; keep it that way. |
 | `backdrop-filter` over the video | It re-blurs on every video frame. Use solid translucent fills on overlays. |
 | Media save | Files save in 4 MB pieces after the clip shows. A half-saved file has no `id` record, so it is never read back as whole. |
+| Swipes | `src/ui/Pager.tsx` handles pointer events directly and counts a cancelled pointer by its last position. Motion's drag dropped swipes on a busy page, and browsers cancel pointers for text selection and scrolling. |
+| Mic on iPhone | Start listening inside the tap handler, before any `await`. iPhone allows the microphone only from the tap. |
+| Editing tests with Python string replace | Prettier reflows lines, so a replace can silently match nothing. Assert the old text is present. |
 | `scrollIntoView` | It scrolls every ancestor, including the 3-screen strip, which then slides to another screen. Scroll the list element itself. |
 | Overlays over the video | A fading overlay still takes taps. The paw scrim has no exit animation for this reason. |
 | WebGPU | `navigator.gpu` can exist with no adapter. `worker.ts` asks for an adapter before choosing WebGPU. |

@@ -1,5 +1,6 @@
 import { uid, type Media, type MediaKind } from "./model";
 import { store } from "./store";
+import { makeVideo, mediaErrorText, removeVideo, waitFor } from "./videoEl";
 
 // Media files live in IndexedDB on this device. Only metadata goes in the project.
 
@@ -84,33 +85,39 @@ function kindOf(f: File): MediaKind | null {
   return null;
 }
 
-function probe(url: string, kind: MediaKind): Promise<{ duration: number; width: number; height: number }> {
-  return new Promise((res, rej) => {
-    if (kind === "image") {
+async function probe(url: string, kind: MediaKind): Promise<{ duration: number; width: number; height: number }> {
+  if (kind === "image")
+    return new Promise((res, rej) => {
       const img = new Image();
       img.onload = () => res({ duration: 0, width: img.naturalWidth, height: img.naturalHeight });
-      img.onerror = () => rej(new Error("Could not read image"));
+      img.onerror = () => rej(new Error("Could not read this image"));
       img.src = url;
-      return;
-    }
-    const el = document.createElement(kind === "video" ? "video" : "audio") as HTMLMediaElement;
-    el.preload = "metadata";
-    el.muted = true;
-    if (el instanceof HTMLVideoElement) el.playsInline = true;
-    el.onloadedmetadata = () => {
-      const v = el as HTMLVideoElement;
-      const finish = (d: number) => res({ duration: d, width: v.videoWidth || 0, height: v.videoHeight || 0 });
-      if (Number.isFinite(el.duration)) return finish(el.duration);
+    });
+  if (kind === "audio")
+    return new Promise((res, rej) => {
+      const a = new Audio();
+      a.preload = "metadata";
+      a.onloadedmetadata = () => res({ duration: Number.isFinite(a.duration) ? a.duration : 10, width: 0, height: 0 });
+      a.onerror = () => rej(new Error(mediaErrorText(a)));
+      a.src = url;
+    });
+  // In the page, muted and playsinline, or iPhone never loads it.
+  const v = makeVideo(url);
+  try {
+    await waitFor(v, ["loadedmetadata"], 15000);
+    if (v.readyState < 1) throw new Error("This browser could not open this video");
+    let d = v.duration;
+    if (!Number.isFinite(d)) {
       // Some recordings report Infinity until seeked far.
-      el.currentTime = 1e7;
-      el.ontimeupdate = () => {
-        el.ontimeupdate = null;
-        finish(Number.isFinite(el.duration) ? el.duration : 10);
-      };
-    };
-    el.onerror = () => rej(new Error("Could not read file"));
-    el.src = url;
-  });
+      v.currentTime = 1e7;
+      await waitFor(v, ["timeupdate", "seeked"], 3000);
+      d = Number.isFinite(v.duration) ? v.duration : 10;
+    }
+    if (!v.videoWidth) throw new Error("This browser cannot show this video's picture. Try Safari on iPhone, or a video saved as H.264.");
+    return { duration: d, width: v.videoWidth, height: v.videoHeight };
+  } finally {
+    removeVideo(v);
+  }
 }
 
 /**
@@ -125,6 +132,7 @@ export async function importFiles(files: FileList | File[], role?: "example"): P
     size: f.size,
     phase: "reading" as ImportPhase,
     saved: 0,
+    error: "",
   }));
   const update = (i: number, patch: Partial<(typeof job)[number]>) => {
     job[i] = { ...job[i], ...patch };
@@ -146,9 +154,9 @@ export async function importFiles(files: FileList | File[], role?: "example"): P
       out.push(m);
       update(i, { phase: "saving" });
       toSave.push({ i, id, f });
-    } catch {
+    } catch (e) {
       URL.revokeObjectURL(url);
-      update(i, { phase: "failed" });
+      update(i, { phase: "failed", error: (e as Error).message });
     }
   }
   void (async () => {

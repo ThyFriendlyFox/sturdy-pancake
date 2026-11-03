@@ -41,6 +41,16 @@ Evidence: <commit / tag / gate run / screenshot>
 
 <!-- Entries below, newest first. -->
 
+## 2026-11-03 — iPhone fixes and tap-to-talk (0.4.0)
+
+The human sent an iPhone screen recording. The video was black, the 3 screens sat off-center, swipes jumped or did nothing, and "Listening" never ended. They asked to remove the corner paw, to make the tap that opens the menu also start the voice, and to keep Add clips reachable with no video.
+
+The black video: iPhone loads and draws only videos that are in the page, muted, playsinline and played once. Hidden videos now come from `src/videoEl.ts`, which does all 4. I could not test on an iPhone. Swipes had 2 more causes. Motion's drag read pointers once per frame, so on a busy page the finger lifted first. And browsers cancel a pointer for text selection or scrolling, and I dropped cancelled swipes. The pager now handles pointers directly and counts a cancel by the last position. Voice now starts on the tap, stops 1.3 s after speech, and has hard limits, so a recognizer that never reports back cannot hang it.
+
+Two test bugs cost time: Prettier had reflowed lines, so 2 edits to the test silently did nothing. The fix was to assert each replacement.
+
+Evidence: `e2e/magic.cjs`, 0 errors: empty-screen tap shows Add clips; tap on the dog listens and "Make the video look warmer." reaches the AI with the subject; swipes −780, −780, −390, 0, 0; forced scroll stays 0. `npm run verify` green.
+
 ## 2026-11-03 — Hold-to-talk stays put; removed the home-screen app mode (0.3.3)
 
 The human reported that holding the paw to talk swiped the screen. Two causes. When the browser had no speech recognition, the code jumped to the talk screen. And the talk screen's message list called `scrollIntoView`, which also scrolled the 3-screen strip sideways onto it. Now the list scrolls itself only, the strip resets any scroll, and voice without browser recognition records the mic and transcribes with Whisper tiny on the phone. In a test with the browser's recognition removed and a fake mic, "make the video look warmer" came back as "Make the video look warmer." in 6.3 s, and the screen did not move.

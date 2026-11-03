@@ -12,6 +12,7 @@ import { thumbnail } from "../thumbs";
 import { fmtTime } from "./controls";
 import { Icon } from "./icons";
 import { Mirror } from "./Mirror";
+import { addClips } from "./Paw";
 import { spring } from "./Sheet";
 
 interface Block {
@@ -311,6 +312,18 @@ export function TracksScreen() {
             {fmtTime(dur)} · {lanes.length} tracks · tap one to open it
           </span>
         </div>
+        <button className="btn small" onClick={addClips}>
+          + Clips
+        </button>
+        <button
+          className="btn small"
+          onClick={() => {
+            store.show(["export"], "user");
+            store.set({ page: 1 });
+          }}
+        >
+          Export
+        </button>
         <button className="mini" aria-label="Back to the video" onClick={() => store.set({ page: 1 })}>
           <Mirror fps={6} scale={0.15} />
         </button>

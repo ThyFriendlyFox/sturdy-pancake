@@ -1,5 +1,6 @@
 // Small frame thumbnails for the scrub strip and the tracks screen. Cached per media and time.
 import { mediaUrl } from "./media";
+import { makeVideo, primeFrame } from "./videoEl";
 
 const cache = new Map<string, Promise<string>>();
 const videos = new Map<string, HTMLVideoElement>();
@@ -18,19 +19,10 @@ export function thumbnail(mediaId: string, t: number, kind: "video" | "image"): 
   const job = (queue = queue.then(async () => {
     let v = videos.get(mediaId);
     if (!v) {
-      v = document.createElement("video");
-      v.muted = true;
-      v.playsInline = true;
-      v.preload = "auto";
-      v.src = url;
+      v = makeVideo(url);
       videos.set(mediaId, v);
-      await new Promise<void>((r) => (v!.onloadeddata = () => r()));
     }
-    await new Promise<void>((r) => {
-      v!.addEventListener("seeked", () => r(), { once: true });
-      setTimeout(r, 1500);
-      v!.currentTime = Math.max(0.01, t);
-    });
+    await primeFrame(v, Math.max(0.01, t)).catch(() => {});
     const c = document.createElement("canvas");
     c.height = 96;
     c.width = Math.round((96 * v.videoWidth) / Math.max(1, v.videoHeight)) || 54;

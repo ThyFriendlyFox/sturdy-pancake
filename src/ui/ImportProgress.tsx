@@ -44,7 +44,7 @@ export function ImportProgress() {
       : saving
         ? "Saving to this phone…"
         : files.every((f) => f.phase === "failed")
-          ? "Could not read that file"
+          ? "Could not add that file"
           : "Ready";
 
   return (
@@ -81,7 +81,7 @@ export function ImportProgress() {
                 {f.phase === "saving" && `Saving · ${mb(f.saved)} of ${mb(f.size)} MB`}
                 {f.phase === "done" && `Saved · ${mb(f.size)} MB`}
                 {f.phase === "unsaved" && "Not saved. Gone after a reload."}
-                {f.phase === "failed" && "Cannot read this file"}
+                {f.phase === "failed" && (f.error || "Cannot read this file")}
               </span>
             </div>
           ))}

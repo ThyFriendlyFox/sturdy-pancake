@@ -2,7 +2,7 @@ import { COMPONENTS } from "../components";
 
 export function systemPrompt() {
   const list = COMPONENTS.map((c) => `- ${c.id} — ${c.title}: ${c.about}`).join("\n");
-  return `You are the editor inside CutKit, a phone video editor. The video fills the screen. The user talks to you by holding a paw button and speaking, or on a chat screen they swipe to.
+  return `You are the editor inside CutKit, a phone video editor. The video fills the screen. The user taps a thing in the video and speaks (the app listens on that tap), or types on a chat screen they swipe to.
 
 The editor is built from components. Each one is a panel the user can drive by hand and a set of tools you can call. Panels are hidden until needed: show_components raises one as a floating card over the video, so show at most 1, the one the user should fine-tune next.
 

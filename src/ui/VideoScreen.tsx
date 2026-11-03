@@ -2,8 +2,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useSession, useBusy } from "../ai/session";
 import { Engine, getEngine, setEngine } from "../engine";
-import { newClip, totalDuration } from "../model";
-import { pickFiles } from "../media";
+import { totalDuration } from "../model";
 import { store, useStore } from "../store";
 import { hitSubject, isolate, useModelProgress, warmup } from "../subjects";
 import { SubjectStatusLine, Thumb } from "../components/subject";
@@ -12,7 +11,8 @@ import { ImportProgress } from "./ImportProgress";
 import { fmtTime } from "./controls";
 import { Icon } from "./icons";
 import { Mirror } from "./Mirror";
-import { CornerPaw, RadialPaw } from "./Paw";
+import { listen, RadialPaw, setPendingSubject } from "./Paw";
+import { cancelListening } from "../voice";
 import { spring } from "./Sheet";
 
 /** Screen point → canvas point (0..1), honoring object-fit: contain. */
@@ -246,7 +246,7 @@ function TapHint() {
           exit={{ opacity: 0, transition: { duration: 0 } }}
           transition={{ delay: 0.6 }}
         >
-          Tap anything to edit it
+          Tap anything and say what to change
         </motion.div>
       )}
     </AnimatePresence>
@@ -258,6 +258,7 @@ export function VideoScreen() {
   const root = useRef<HTMLDivElement>(null);
   const empty = useStore((s) => s.project.clips.length === 0);
   const importing = useStore((s) => !!s.importing);
+  const radialOpen = useStore((s) => !!s.radial);
   const [size, setSize] = useState({ w: 390, h: 844 });
   const down = useRef<{ x: number; y: number; t: number } | null>(null);
 
@@ -274,43 +275,51 @@ export function VideoScreen() {
     return () => clearTimeout(t);
   }, [empty]);
 
-  const onTap = async (clientX: number, clientY: number) => {
+  // A tap opens the paw menu and starts listening in the same tap (iPhone allows the microphone only there).
+  const onTap = (clientX: number, clientY: number) => {
     const e = getEngine();
     if (!e || !canvas.current) return;
-    if (store.get().radial) return store.set({ radial: null });
-    const p = canvasPoint(canvas.current, clientX, clientY);
-    if (!p) return;
-    e.pause();
-    const hit = e.toSource(e.t, p.x, p.y);
-    if (!hit) return;
+    if (store.get().radial) {
+      cancelListening();
+      return store.set({ radial: null });
+    }
     const box = root.current!.getBoundingClientRect();
     const at = { x: clientX - box.left, y: clientY - box.top };
-    const existing = hitSubject(hit.clipId, hit.sourceT, hit.point);
-    if (existing) {
-      store.set({ selectedSubjectId: existing, radial: { ...at, subjectId: existing, finding: false } });
+    const open = (subjectId: string | null, finding: boolean) => store.set({ radial: { ...at, subjectId, finding } });
+    if (empty) {
+      open(null, false);
+      setPendingSubject(Promise.resolve(null));
+      listen();
       return;
     }
-    store.set({ radial: { ...at, subjectId: null, finding: true }, selectedSubjectId: null });
-    try {
-      const id = await isolate(hit.clipId, hit.sourceT, hit.point, "user");
-      if (store.get().radial) store.set({ radial: { ...at, subjectId: id, finding: false } });
-      store.set({ selectedSubjectId: id });
-    } catch (err) {
-      store.set({ radial: null });
-      store.toast((err as Error).message || "Could not find anything there");
+    e.pause();
+    const p = canvasPoint(canvas.current, clientX, clientY);
+    const hit = p && e.toSource(e.t, p.x, p.y);
+    const existing = hit ? hitSubject(hit.clipId, hit.sourceT, hit.point) : null;
+    if (!hit || existing) {
+      if (existing) store.set({ selectedSubjectId: existing });
+      open(existing, false);
+      setPendingSubject(Promise.resolve(existing));
+      listen();
+      return;
     }
-  };
-
-  const addFirst = async () => {
-    const ms = await pickFiles();
-    const vids = ms.filter((m) => m.kind !== "audio");
-    if (vids.length)
-      store.edit("media", "add_clips", "user", { mediaIds: vids.map((m) => m.id) }, (p) => ({
-        ...p,
-        clips: [...p.clips, ...vids.map(newClip)],
-      }));
-    const song = ms.find((m) => m.kind === "audio");
-    if (song) store.edit("music", "set_music", "user", { mediaId: song.id }, (p) => ({ ...p, music: { ...p.music, mediaId: song.id } }));
+    open(null, true);
+    store.set({ selectedSubjectId: null });
+    setPendingSubject(
+      isolate(hit.clipId, hit.sourceT, hit.point, "user").then(
+        (id) => {
+          if (store.get().radial) open(id, false);
+          store.set({ selectedSubjectId: id });
+          return id;
+        },
+        (err) => {
+          if (store.get().radial) open(null, false);
+          store.toast((err as Error).message || "Could not find anything there");
+          return null;
+        },
+      ),
+    );
+    listen();
   };
 
   return (
@@ -335,31 +344,28 @@ export function VideoScreen() {
       <i className="edge right" aria-hidden="true" />
 
       {empty ? (
-        <motion.button
-          className="empty-add"
-          style={{ visibility: importing ? "hidden" : "visible" }}
-          onClick={addFirst}
-          whileTap={{ scale: 0.97 }}
-        >
-          <motion.span className="big" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1.8, repeat: Infinity }}>
-            <Icon name="plus" size={40} />
-          </motion.span>
-          Add videos, photos or music
-        </motion.button>
+        !importing &&
+        !radialOpen && (
+          <div className="empty-hint">
+            <motion.span className="big" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1.8, repeat: Infinity }}>
+              <Icon name="plus" size={40} />
+            </motion.span>
+            Tap anywhere to start
+          </div>
+        )
       ) : (
         <>
           <SubjectChip />
           <TapHint />
           <Progress />
-          <RadialPaw width={size.w} height={size.h} />
           <FindingLabel />
         </>
       )}
+      <RadialPaw width={size.w} height={size.h} />
       <Toast />
       <ImportProgress />
       <VoiceLayer />
       <CardHost />
-      {!empty && <CornerPaw />}
     </div>
   );
 }

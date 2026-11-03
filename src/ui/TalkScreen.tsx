@@ -4,7 +4,7 @@ import { session, useBusy, useSession } from "../ai/session";
 import { RecipeCard } from "../components/examples";
 import { pickFiles } from "../media";
 import { store, useStore } from "../store";
-import { useHoldToTalk } from "./Paw";
+import { toggleTalk } from "./Paw";
 import { Icon } from "./icons";
 import { Mirror } from "./Mirror";
 import { spring } from "./Sheet";
@@ -28,7 +28,6 @@ export function TalkScreen({ onSettings }: { onSettings: () => void }) {
   const note = useStore((s) => s.voiceNote);
   const [text, setText] = useState("");
   const log = useRef<HTMLDivElement>(null);
-  const hold = useHoldToTalk(() => store.toast("Hold to talk"));
 
   // Scroll only the message list. scrollIntoView would also scroll the screen strip sideways onto this screen.
   useEffect(() => {
@@ -66,7 +65,7 @@ export function TalkScreen({ onSettings }: { onSettings: () => void }) {
         </button>
       </header>
 
-      <div className="talk-log no-swipe" ref={log}>
+      <div className="talk-log" ref={log}>
         <AnimatePresence initial={false}>
           {msgs.map((m) => {
             if (m.recipeId) {
@@ -143,7 +142,7 @@ export function TalkScreen({ onSettings }: { onSettings: () => void }) {
       >
         <label className="field">
           <span className="sr">Message</span>
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type, or hold the paw" enterKeyHint="send" />
+          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type, or tap the mic" enterKeyHint="send" />
           <button type="button" className="icon-btn" aria-label="Add an example video to copy" onClick={attach}>
             <Icon name="attach" size={18} />
           </button>
@@ -156,8 +155,8 @@ export function TalkScreen({ onSettings }: { onSettings: () => void }) {
           <motion.button
             type="button"
             className={"pad small" + (listening ? " listening" : "")}
-            aria-label="Hold to talk"
-            {...hold}
+            aria-label={listening ? "Stop listening and send" : "Talk"}
+            onClick={toggleTalk}
             animate={{ scale: listening ? 1.15 : 1 }}
           >
             <Icon name="mic" size={24} />

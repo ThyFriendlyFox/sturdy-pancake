@@ -13,6 +13,7 @@ import {
 } from "./model";
 import { mediaUrl } from "./media";
 import { PITCH_WORKLET } from "./pitch";
+import { makeVideo, primeFrame, removeVideo } from "./videoEl";
 import { store } from "./store";
 import { keyframeAt, onSubjectsChange, stillOf } from "./subjects";
 import type { SubjectLayer } from "./model";
@@ -127,6 +128,7 @@ export class Engine {
 
   /** Call from a tap handler so iOS lets media play later. */
   async unlock() {
+    for (const v of this.videos.values()) v.muted = false;
     await this.ensureAudio();
     for (const el of [...this.videos.values(), ...this.vo.values(), ...(this.music ? [this.music] : [])]) {
       const wasPaused = el.paused;
@@ -166,7 +168,11 @@ export class Engine {
   // ---------- element sync ----------
   private syncElements(p: Project) {
     const ids = new Set(p.clips.map((c) => c.id));
-    for (const [id, el] of this.videos) if (!ids.has(id)) el.pause(), this.videos.delete(id);
+    for (const [id, el] of this.videos)
+      if (!ids.has(id)) {
+        removeVideo(el);
+        this.videos.delete(id);
+      }
     for (const c of p.clips) {
       const m = store.get().media.find((x) => x.id === c.mediaId);
       if (!m) continue;
@@ -180,12 +186,8 @@ export class Engine {
           this.images.set(m.id, img);
         }
       } else if (!this.videos.has(c.id)) {
-        const v = document.createElement("video");
-        v.playsInline = true;
-        v.preload = "auto";
-        v.crossOrigin = "anonymous";
-        v.src = url;
-        v.currentTime = c.in;
+        const v = makeVideo(url);
+        void primeFrame(v, c.in).then(this.invalidate, this.invalidate);
         v.addEventListener("seeked", this.invalidate);
         v.addEventListener("loadeddata", this.invalidate);
         this.videos.set(c.id, v);

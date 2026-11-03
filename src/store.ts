@@ -19,7 +19,7 @@ export interface State {
   voiceNote: string; // what the voice input is doing, e.g. "Writing down what you said…"
   toast: { text: string; undo: boolean; at: number } | null;
   recipes: Recipe[];
-  importing: { files: { name: string; size: number; phase: ImportPhase; saved: number }[]; at: number } | null;
+  importing: { files: { name: string; size: number; phase: ImportPhase; saved: number; error: string }[]; at: number } | null;
 }
 
 export interface RecipeMove {

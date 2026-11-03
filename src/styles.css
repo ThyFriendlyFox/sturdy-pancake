@@ -58,16 +58,22 @@ a {
 
 /* ---------- shell ---------- */
 .app {
+  /* Text selection and the iPhone press-and-hold callout fight with swipes and taps. Inputs stay selectable. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   position: relative;
   height: 100dvh;
   max-width: 640px;
   margin: 0 auto;
   overflow: hidden;
 }
+/* overflow: clip, not hidden: a hidden box can still be scrolled (focus, scrollIntoView), which drifts the screens. */
 .pager {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  overflow: clip;
   touch-action: pan-y;
 }
 .pager-strip {
@@ -78,6 +84,8 @@ a {
   flex: none;
   height: 100%;
   position: relative;
+  overflow: hidden;
+  overflow: clip;
 }
 .screen {
   position: relative;
@@ -156,20 +164,20 @@ a {
   right: 0;
   border-radius: 3px 0 0 3px;
 }
-.empty-add {
+.empty-hint {
   position: absolute;
   inset: calc(var(--safe-t) + 60px) 20px calc(var(--safe-b) + 60px);
   border: 2px dashed rgba(255, 255, 255, 0.2);
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.04);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 10px;
   color: var(--dim);
+  pointer-events: none;
 }
-.empty-add .big {
+.empty-hint .big {
   color: var(--accent);
 }
 .tap-hint {
@@ -233,15 +241,7 @@ a {
   background: var(--text);
 }
 
-/* paw */
-.paw {
-  position: absolute;
-  right: 14px;
-  bottom: calc(var(--safe-b) + 64px);
-  width: 72px;
-  height: 72px;
-  z-index: 9;
-}
+/* talk button */
 .pad {
   position: absolute;
   right: 0;
@@ -274,98 +274,6 @@ a {
   height: 52px;
   flex: none;
   background: var(--accent);
-}
-.pad-label {
-  position: absolute;
-  right: 0;
-  top: 100%;
-  width: 64px;
-  text-align: center;
-  font-size: 10px;
-  font-weight: 600;
-  margin-top: 2px;
-}
-.toe {
-  position: absolute;
-  left: 40px;
-  top: 40px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: var(--glass);
-  padding: 0;
-  display: grid;
-  place-items: center;
-}
-.toe.open {
-  background: rgba(30, 30, 36, 0.78);
-}
-.toe-inner {
-  display: grid;
-  place-items: center;
-}
-.toe-label {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
-}
-.scrim {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  background: rgba(0, 0, 0, 0.42);
-  z-index: 5;
-}
-.filmstrip {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  top: calc(var(--safe-t) + 40px);
-  z-index: 6;
-}
-.filmstrip-frames {
-  position: relative;
-  display: flex;
-  gap: 2px;
-  height: 56px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  touch-action: none;
-}
-.filmstrip-frames img,
-.filmstrip-frames span {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  object-fit: cover;
-  background: var(--panel-2);
-  pointer-events: none;
-}
-.filmstrip-head {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--accent);
-  box-shadow: 0 0 6px var(--accent);
-}
-.filmstrip-cuts {
-  position: relative;
-  height: 8px;
-}
-.filmstrip-cuts i {
-  position: absolute;
-  top: 3px;
-  width: 5px;
-  height: 5px;
-  margin-left: -2px;
-  border-radius: 50%;
-  background: var(--text);
 }
 
 /* radial paw */
@@ -449,7 +357,7 @@ a {
 .finding {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--safe-b) + 150px);
+  top: calc(var(--safe-t) + 34px);
   translate: -50% 0;
   display: flex;
   flex-direction: column;
@@ -1164,6 +1072,8 @@ input[type="range"] {
 input:not([type]),
 input[type="password"],
 textarea {
+  user-select: text;
+  -webkit-user-select: text;
   width: 100%;
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid var(--line);

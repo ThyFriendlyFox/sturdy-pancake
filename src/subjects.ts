@@ -6,6 +6,7 @@ import { mediaUrl } from "./media";
 import { followTimes, maskStats, nearest, innerPoint, type MaskStats } from "./segment/maskmath";
 import type { SegmentRequest, SegmentResponse } from "./segment/worker";
 import { store } from "./store";
+import { makeVideo, primeFrame } from "./videoEl";
 import type { EventSource } from "./telemetry";
 
 const GRAB_SIDE = 512; // frames go to the model at this size (long side)
@@ -102,22 +103,10 @@ async function grab(mediaId: string, t: number): Promise<HTMLCanvasElement> {
   if (!url) throw new Error("Media not loaded");
   let v = grabbers.get(mediaId);
   if (!v) {
-    v = document.createElement("video");
-    v.muted = true;
-    v.playsInline = true;
-    v.preload = "auto";
-    v.src = url;
+    v = makeVideo(url);
     grabbers.set(mediaId, v);
-    await new Promise<void>((r) => (v!.readyState >= 1 ? r() : v!.addEventListener("loadedmetadata", () => r(), { once: true })));
   }
-  if (Math.abs(v.currentTime - t) > 0.001 || v.readyState < 2) {
-    await new Promise<void>((r) => {
-      const done = () => r();
-      v!.addEventListener("seeked", done, { once: true });
-      setTimeout(done, 2500);
-      v!.currentTime = t;
-    });
-  }
+  await primeFrame(v, t);
   const s = Math.min(1, GRAB_SIDE / Math.max(v.videoWidth, v.videoHeight));
   const c = document.createElement("canvas");
   c.width = Math.max(1, Math.round(v.videoWidth * s));

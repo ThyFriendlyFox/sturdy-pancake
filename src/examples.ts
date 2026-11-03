@@ -1,6 +1,7 @@
 // Reads an example video on the device: a contact sheet for the AI to look at, where the shots change, and the tempo.
 import { detectBeats } from "./beats";
 import { mediaUrl } from "./media";
+import { makeVideo, primeFrame, removeVideo } from "./videoEl";
 
 export interface ExampleAnalysis {
   duration: number;
@@ -23,15 +24,8 @@ async function seek(v: HTMLVideoElement, t: number) {
 export async function analyzeExample(mediaId: string): Promise<ExampleAnalysis> {
   const url = mediaUrl(mediaId);
   if (!url) throw new Error("Example not loaded");
-  const v = document.createElement("video");
-  v.muted = true;
-  v.playsInline = true;
-  v.preload = "auto";
-  v.src = url;
-  await new Promise<void>((r, j) => {
-    v.onloadeddata = () => r();
-    v.onerror = () => j(new Error("Cannot read the example"));
-  });
+  const v = makeVideo(url);
+  await primeFrame(v);
   const duration = v.duration;
 
   // Shot changes: compare tiny grayscale frames 5 times a second.
@@ -79,7 +73,7 @@ export async function analyzeExample(mediaId: string): Promise<ExampleAnalysis> 
   } catch {
     /* no audio track */
   }
-  v.removeAttribute("src");
+  removeVideo(v);
   return {
     duration: +duration.toFixed(2),
     cuts,

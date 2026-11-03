@@ -1,5 +1,6 @@
-// Hold-to-talk. Uses the browser's speech recognition when it has one (Safari, Chrome). Otherwise it records
+// Tap-to-talk. Uses the browser's speech recognition when it has one (Safari, Chrome). Otherwise it records
 // the microphone and transcribes on the device with Whisper (src/speech/worker.ts).
+// Listening stops by itself after a pause in speech, and never runs longer than MAX_MS.
 import { store } from "./store";
 
 type Rec = {
@@ -22,22 +23,45 @@ const Ctor = (): (new () => Rec) | null => {
 export const voiceSupported = () =>
   typeof window !== "undefined" && (!!Ctor() || (!!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== "undefined"));
 
+const MAX_MS = 20000;
 let onDone: ((text: string) => void) | null = null;
 let stopNow: (() => void) | null = null;
+let cancelled = false;
+let watchdog = 0;
 
-/** Start listening. `done` gets the full transcript when the user lets go. */
+/** Start listening. `done` gets the transcript when the user stops talking (or taps to stop). */
 export function startListening(done: (text: string) => void) {
   if (stopNow) return false;
   onDone = done;
+  cancelled = false;
   store.set({ listening: true, heard: "", voiceNote: "" });
+  // Until the microphone is live (the permission prompt can take a moment), then MAX_MS once it is.
+  armWatchdog(12000);
   return Ctor() ? browserSpeech() : recordAndTranscribe();
 }
 
+function armWatchdog(ms: number) {
+  clearTimeout(watchdog);
+  watchdog = window.setTimeout(() => stopNow?.(), ms);
+}
+
+/** Stop now and send what was heard. */
 export function stopListening() {
   stopNow?.();
 }
 
+/** Stop now and send nothing. */
+export function cancelListening() {
+  if (!stopNow) return;
+  cancelled = true;
+  stopNow();
+}
+
+export const isListening = () => !!stopNow;
+
 function finish(text: string) {
+  clearTimeout(watchdog);
+  if (cancelled) text = "";
   stopNow = null;
   store.set({ listening: false, heard: "", voiceNote: "" });
   const cb = onDone;
@@ -52,7 +76,8 @@ function browserSpeech() {
   let failed = false;
   rec.lang = navigator.language || "en-US";
   rec.interimResults = true;
-  rec.continuous = true;
+  rec.continuous = false; // ends by itself after a pause
+  (rec as unknown as { onaudiostart: () => void }).onaudiostart = () => armWatchdog(MAX_MS);
   rec.onresult = (e) => {
     let interim = "";
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -66,8 +91,21 @@ function browserSpeech() {
     failed = true;
     if (e.error === "not-allowed") store.toast("Microphone is blocked. Allow it in the browser settings.");
   };
-  rec.onend = () => finish(failed ? "" : store.get().heard || finalText);
-  stopNow = () => rec.stop();
+  let ended = false;
+  rec.onend = () => {
+    if (ended) return;
+    ended = true;
+    finish(failed ? "" : store.get().heard || finalText);
+  };
+  // Some recognizers never report the end (seen on iPhone): finish ourselves shortly after asking to stop.
+  stopNow = () => {
+    try {
+      rec.stop();
+    } catch {
+      /* already stopped */
+    }
+    setTimeout(() => rec.onend(), 1500);
+  };
   try {
     rec.start();
     return true;
@@ -111,6 +149,40 @@ async function toPcm16k(blob: Blob): Promise<Float32Array> {
   return (await off.startRendering()).getChannelData(0);
 }
 
+/** Calls `stop` after 1.3 s of quiet following speech, or after 7 s with no speech at all. */
+function watchSilence(stream: MediaStream, stop: () => void) {
+  const ac = new AudioContext();
+  const an = ac.createAnalyser();
+  an.fftSize = 1024;
+  ac.createMediaStreamSource(stream).connect(an);
+  const buf = new Float32Array(an.fftSize);
+  const t0 = Date.now();
+  let spoke = false,
+    quietSince = 0;
+  const timer = setInterval(() => {
+    if (!stopNow || stream.getTracks().every((t) => t.readyState === "ended")) {
+      clearInterval(timer);
+      void ac.close();
+      return;
+    }
+    an.getFloatTimeDomainData(buf);
+    let sum = 0;
+    for (const x of buf) sum += x * x;
+    const rms = Math.sqrt(sum / buf.length);
+    const now = Date.now();
+    if (rms > 0.02) {
+      spoke = true;
+      quietSince = 0;
+    } else if (spoke) {
+      quietSince ||= now;
+      if (now - quietSince > 1300) stop();
+    } else if (now - t0 > 7000) {
+      cancelled = true;
+      stop();
+    }
+  }, 100);
+}
+
 function recordAndTranscribe() {
   let stream: MediaStream | null = null;
   let rec: MediaRecorder | null = null;
@@ -130,10 +202,13 @@ function recordAndTranscribe() {
         s.getTracks().forEach((t) => t.stop());
         return finish("");
       }
+      armWatchdog(MAX_MS);
+      watchSilence(s, () => stopNow?.());
       rec = new MediaRecorder(s);
       rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
       rec.onstop = async () => {
         stream?.getTracks().forEach((t) => t.stop());
+        if (cancelled) return finish("");
         store.set({ voiceNote: "Writing down what you said…" });
         try {
           const pcm = await toPcm16k(new Blob(chunks, { type: rec!.mimeType }));

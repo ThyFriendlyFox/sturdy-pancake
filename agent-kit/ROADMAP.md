@@ -62,6 +62,7 @@ provisional: true — the agent seeded this order at install time. The human re-
 
 | Week | Feature | Release | Evidence |
 |---|---|---|---|
+| 2026-11-03 | iPhone fixes and tap-to-talk; corner paw removed | 0.4.0 | `e2e/magic.cjs`, 0 errors: tap listens, voice reaches the AI with the subject; swipes 1 screen each; forced scroll stays 0. Real iPhone not checked |
 | 2026-11-03 | Hold-to-talk fix, voice fallback, no home-screen app mode | 0.3.3 | Fake-mic test: "Make the video look warmer." in 6.3 s; strip stayed at the video (`scrollLeft=0`) |
 | 2026-11-03 | Load progress and speed | 0.3.2 | 4× CPU throttle: paused 6.3 → 60 fps, blocked time 2.9 s → 0 s per 3 s; playing 5 → 15 fps; load overlay steps captured; follow 145 s → 94 s |
 | 2026-11-03 | Desktop: three screens side by side | 0.3.1 | Playwright at 1440×900: 3 panes, fake-AI edit shows in all 3; at 390×844 the swipe pager returns; 0 errors |
@@ -86,3 +87,4 @@ provisional: true — the agent seeded this order at install time. The human re-
 - 2026-11-03 — Inserted "Magic UI" at position 1. The human approved the mockups and asked to build and merge it now.
 - 2026-11-03 — Added and shipped "Desktop: three screens side by side" out of queue. The human asked for it during the Magic UI cycle.
 - 2026-11-03 — Inserted "Load progress and speed" at position 1. The human reported no visible progress while a video loads, and a slow app.
+- 2026-11-03 — Inserted "iPhone fixes and tap-to-talk" at position 1 from the human's iPhone screen recording.

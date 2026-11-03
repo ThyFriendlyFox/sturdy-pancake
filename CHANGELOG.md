@@ -5,6 +5,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-03
+### Changed
+- Tap to talk: tapping the video opens the paw menu and listens at once. Listening stops by itself when you stop talking. Tap the paw's center to stop early.
+- With no video, tap anywhere: the menu offers Add clips, Music and Copy an edit.
+- Tracks has Clips and Export buttons.
+
+### Removed
+- The corner paw.
+
+### Fixed
+- Swipes work anywhere, including over the chat, and move exactly 1 screen. They no longer drop on a busy page or drift after the browser scrolls.
+- Videos load and draw on iPhone: hidden videos are now in the page and played once, which iPhone needs.
+- A browser that cannot play a video's format says so, instead of loading forever.
+- "Listening" can no longer stay on screen forever.
+- No more text selection or the iPhone Copy / Look Up callout while tapping and swiping.
+
 ## [0.3.3] - 2026-11-03
 ### Fixed
 - Holding the paw to talk slid the screen over to the talk screen. It now stays on the video.

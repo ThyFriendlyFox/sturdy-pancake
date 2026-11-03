@@ -2,7 +2,7 @@
 
 An AI-first video editor for phones. The video fills the screen; everything else is hidden until it's needed.
 
-- **Talk:** hold the paw in the corner and say what to change, or swipe left to the talk screen.
+- **Tap and talk:** tap anything in the video; a paw menu opens around it and the app listens. Say what to change, or swipe left to the talk screen.
 - **Tap anything:** tap a thing in the video and it lifts out, cut out and followed through the clip on the phone (SlimSAM in a web worker). A paw menu around it adds glow, spotlight, trail, freeze, clone, recolor, erase, sticker or a follow camera.
 - **Components appear when needed:** editing units (cuts, transitions, color, voice, pitch, music, text, motion graphics, subjects…) are both a panel you drive by hand and tools the AI calls. They rise as a floating card when the AI or you need one.
 - **Tracks:** swipe right for every track on one timeline; tap a track to open it in place.
