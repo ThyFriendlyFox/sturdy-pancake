@@ -11,7 +11,6 @@ An AI-first video editor for phones. The video fills the screen; everything else
 - **AI:** sign in through OpenRouter (Google/GitHub login) or paste a Claude, OpenAI or Gemini key. Keys stay on the device and go straight to the provider.
 - **Private media:** clips are stored in the browser (IndexedDB) and rendered on-device. Nothing is uploaded.
 - **Edit data:** every edit (tool, arguments, AI or user, resulting project state) and chat turn is sent to `/api/events` and stored privately in Vercel Blob, to train the AI on how the tools get used. Users can turn this off in AI settings.
-- **Installable:** add to home screen (PWA, works offline once loaded).
 
 ## Code map
 

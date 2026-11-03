@@ -41,6 +41,16 @@ Evidence: <commit / tag / gate run / screenshot>
 
 <!-- Entries below, newest first. -->
 
+## 2026-11-03 — Hold-to-talk stays put; removed the home-screen app mode (0.3.3)
+
+The human reported that holding the paw to talk swiped the screen. Two causes. When the browser had no speech recognition, the code jumped to the talk screen. And the talk screen's message list called `scrollIntoView`, which also scrolled the 3-screen strip sideways onto it. Now the list scrolls itself only, the strip resets any scroll, and voice without browser recognition records the mic and transcribes with Whisper tiny on the phone. In a test with the browser's recognition removed and a fake mic, "make the video look warmer" came back as "Make the video look warmer." in 6.3 s, and the screen did not move.
+
+The human reported that tapping their added media brought up the old version of the site. I had added a manifest, a full-screen app mode and an offline cache (service worker) in 0.1.0. They were not in the design: iPhone already adds sites to the home screen. I removed them.
+
+I could not reproduce the old version in a normal browser: after an old visit and an update, the new UI loaded. The likely source is a home-screen copy, which keeps its own storage and cache. The replacement `sw.js` deletes the old caches, removes itself and reloads open pages, and the app also unregisters it on load.
+
+Evidence: voice test above, 0 errors; `npm run verify` green.
+
 ## 2026-11-03 — Load progress, and a 10× faster paused editor (0.3.2)
 
 The human said loading a video showed no progress and the app felt slow. I measured first. With the CPU slowed 4× and a 31 MB 1080p clip, the paused editor ran at 6 frames per second, and the main thread was blocked 2.9 s of every 3 s.

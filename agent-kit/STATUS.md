@@ -15,7 +15,7 @@ behavior change. The weekly cycle (WEEKLY.md step 5) refreshes it.
 | Subject effects (glow, spotlight, trail, freeze, clone, recolor, erase, sticker, follow cam) | ✅ | Glow and spotlight on the followed dog at 3.1 s mid-playback (screenshot in devlog). The others render in code; not each screenshotted |
 | Floating component cards, AI badge | ✅ | Fake-AI run: apply_look + show_components raised the Color card with "AI set this" |
 | Tracks screen, open a track in place | ✅ | Screenshots: 7 lanes; Dog lane opens the Subject component |
-| Talk screen, voice | 🚧 | Typing works in the run. Speech recognition is not testable headless; not tried on a phone |
+| Talk screen, voice | 🚧 | Whisper fallback: fake-mic sentence transcribed exactly in 6.3 s, screen did not move. Browser speech recognition not testable headless; not tried on a phone |
 | Copy an edit (recipe) | ✅ | Fake-AI recipe: 1 of 2 moves on, Apply split 1 clip into 4, 0 motions added |
 | Chat AI tool loop (Claude, OpenAI, Gemini, OpenRouter) | ✅ | Fake Claude runs above. No real-key run recorded |
 | Export (MediaRecorder) | ✅ | Unchanged since 0.2.0; not re-run in this cycle |
@@ -29,5 +29,5 @@ States: ✅ done (gated) · 🚧 in progress · ❌ not started · 🧊 frozen/w
 ## Current week
 
 - **Shipping:** between cycles — next is ROADMAP item 1, browser end-to-end gate
-- **Last release:** 0.3.2 (untagged) — 2026-11-03, live at https://cutkit-amber.vercel.app
+- **Last release:** 0.3.3 (untagged) — 2026-11-03, live at https://cutkit-amber.vercel.app
 - **Known red:** none. GitHub's default branch is still `claude/cutkit`; the human switches it to `main`.

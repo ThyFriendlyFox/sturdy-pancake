@@ -41,4 +41,5 @@ At first start, no AI is connected and the project is empty. A damaged localStor
 | Media save piece size | `src/media.ts` `CHUNK` | 4 MB |
 | Model download delay | `src/ui/VideoScreen.tsx` | 5 s after the first clip is on screen |
 | Playback draw cap | `src/engine.ts` `tick()` | 30 fps; paused draws only after a change |
+| Speech-to-text fallback | `src/speech/worker.ts` `MODEL` | `Xenova/whisper-tiny`, WASM q8; used when the browser has no speech recognition |
 | Hold-to-talk delay | `src/ui/Paw.tsx` `HOLD_MS` | 280 ms |

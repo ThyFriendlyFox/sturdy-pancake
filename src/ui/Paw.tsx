@@ -24,11 +24,7 @@ export function useHoldToTalk(onTap: () => void) {
     timer.current = window.setTimeout(() => {
       holding.current = true;
       if (!session.connected) return session.connect();
-      if (!voiceSupported()) {
-        store.toast("Voice is not available in this browser. Type on the talk screen.");
-        store.set({ page: 2 });
-        return;
-      }
+      if (!voiceSupported()) return store.toast("This browser cannot use the microphone. Type on the talk screen.");
       startListening((text) => void session.ask(text));
     }, HOLD_MS);
   };

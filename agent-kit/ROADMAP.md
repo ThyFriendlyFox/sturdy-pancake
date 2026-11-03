@@ -62,6 +62,7 @@ provisional: true — the agent seeded this order at install time. The human re-
 
 | Week | Feature | Release | Evidence |
 |---|---|---|---|
+| 2026-11-03 | Hold-to-talk fix, voice fallback, no home-screen app mode | 0.3.3 | Fake-mic test: "Make the video look warmer." in 6.3 s; strip stayed at the video (`scrollLeft=0`) |
 | 2026-11-03 | Load progress and speed | 0.3.2 | 4× CPU throttle: paused 6.3 → 60 fps, blocked time 2.9 s → 0 s per 3 s; playing 5 → 15 fps; load overlay steps captured; follow 145 s → 94 s |
 | 2026-11-03 | Desktop: three screens side by side | 0.3.1 | Playwright at 1440×900: 3 panes, fake-AI edit shows in all 3; at 390×844 the swipe pager returns; 0 errors |
 | 2026-11-03 | Magic UI: video first, tap to isolate, paw menus, floating components, tracks and talk screens, copy an edit | 0.3.0 | `e2e/magic.cjs` run, 0 errors: dog isolated and followed in-browser; glow and spotlight track it in playback; recipe split 1 clip into 4 |
@@ -69,6 +70,8 @@ provisional: true — the agent seeded this order at install time. The human re-
 | 2026-11-02 | AI-first editor with 13 components, PWA, edit data | 0.1.0 | Playwright run with a fake AI: 8 tool calls applied, 3 components shown, export 1.6 MB at `5fdfd78` |
 
 ## Explicitly not doing
+
+- Home-screen app mode and offline cache — not in the design; iPhone home-screen bookmarks cover it, and the cache served old copies (removed in 0.3.3).
 
 - Uploading media to a server — it breaks the privacy promise and adds hosting cost.
 - A proxy for AI keys — keys go straight to the provider.

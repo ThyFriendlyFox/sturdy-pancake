@@ -5,6 +5,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-11-03
+### Fixed
+- Holding the paw to talk slid the screen over to the talk screen. It now stays on the video.
+- Voice works without the browser's speech recognition (for example a site saved to the iPhone home screen): it records and writes down your words on the phone.
+
+### Removed
+- Home-screen app mode and the offline cache. The cache could open an old copy of the app. Phones that have it lose it on their next visit. Adding the site to the home screen still works as a normal bookmark.
+
 ## [0.3.2] - 2026-11-03
 ### Added
 - Adding a video shows each step: reading it, loading the first frame, and saving it to this phone with the MB done.

@@ -60,11 +60,12 @@ Requires Node.js 20 or newer.
 | `createMediaElementSource` | Works once per element. The engine keeps a `gains` map; never route an element twice. |
 | Claude tool use | Claude Opus 5.5 / Sonnet 5.5 reject forced `tool_choice` (`any`/`tool`). Keep `auto`. |
 | Slider edits | Pass `merge = true` so a drag is one undo step and one log event. |
-| `public/sw.js` | Pages are network-first, `/assets/` cache-first. Change the cache name when the caching rules change. |
+| `public/sw.js` | Not an offline cache. It only removes the service worker that 0.1–0.3.2 installed. Keep it, and keep its `no-cache` header, until old installs are gone. |
 | Export | Real time: it plays the timeline once into `MediaRecorder`. Safari gives MP4, Chrome gives WebM. |
 | `ctx.filter` | Any filter string, even all-1 values, forces a slow canvas path. `filterCss()` returns "none" for untouched clips; keep it that way. |
 | `backdrop-filter` over the video | It re-blurs on every video frame. Use solid translucent fills on overlays. |
 | Media save | Files save in 4 MB pieces after the clip shows. A half-saved file has no `id` record, so it is never read back as whole. |
+| `scrollIntoView` | It scrolls every ancestor, including the 3-screen strip, which then slides to another screen. Scroll the list element itself. |
 | Overlays over the video | A fading overlay still takes taps. The paw scrim has no exit animation for this reason. |
 | WebGPU | `navigator.gpu` can exist with no adapter. `worker.ts` asks for an adapter before choosing WebGPU. |
 | Playback clock | The playing video drives `Engine.t`. Seeking a playing video to "catch up" shows black frames on slow decoders. |

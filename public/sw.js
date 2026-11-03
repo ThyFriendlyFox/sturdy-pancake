@@ -1,31 +1,12 @@
-// Network-first for pages, cache-first for built assets, so the app opens offline.
-const CACHE = "cutkit-v1";
+// CutKit no longer uses a service worker. Devices that installed the old one fetch this file on their next
+// visit; it deletes the old caches, removes itself and reloads open pages so they get the current app.
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
-self.addEventListener("fetch", (e) => {
-  const url = new URL(e.request.url);
-  if (e.request.method !== "GET" || url.origin !== location.origin || url.pathname.startsWith("/api/")) return;
-  if (url.pathname.startsWith("/assets/")) {
-    e.respondWith(
-      caches.match(e.request).then(
-        (hit) =>
-          hit ||
-          fetch(e.request).then((r) => {
-            const c = r.clone();
-            caches.open(CACHE).then((x) => x.put(e.request, c));
-            return r;
-          }),
-      ),
-    );
-    return;
-  }
-  e.respondWith(
-    fetch(e.request)
-      .then((r) => {
-        const c = r.clone();
-        caches.open(CACHE).then((x) => x.put(e.request, c));
-        return r;
-      })
-      .catch(() => caches.match(e.request).then((hit) => hit || caches.match("/"))),
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    (async () => {
+      for (const k of await caches.keys()) await caches.delete(k);
+      await self.registration.unregister();
+      for (const c of await self.clients.matchAll({ type: "window" })) c.navigate(c.url);
+    })(),
   );
 });

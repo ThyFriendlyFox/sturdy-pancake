@@ -25,12 +25,15 @@ export function TalkScreen({ onSettings }: { onSettings: () => void }) {
   const hasClips = useStore((s) => s.project.clips.length > 0);
   const listening = useStore((s) => s.listening);
   const heard = useStore((s) => s.heard);
+  const note = useStore((s) => s.voiceNote);
   const [text, setText] = useState("");
-  const end = useRef<HTMLDivElement>(null);
+  const log = useRef<HTMLDivElement>(null);
   const hold = useHoldToTalk(() => store.toast("Hold to talk"));
 
+  // Scroll only the message list. scrollIntoView would also scroll the screen strip sideways onto this screen.
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+    const el = log.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [msgs.length, busy, listening]);
 
   const send = (t: string) => {
@@ -63,7 +66,7 @@ export function TalkScreen({ onSettings }: { onSettings: () => void }) {
         </button>
       </header>
 
-      <div className="talk-log no-swipe">
+      <div className="talk-log no-swipe" ref={log}>
         <AnimatePresence initial={false}>
           {msgs.map((m) => {
             if (m.recipeId) {
@@ -103,7 +106,7 @@ export function TalkScreen({ onSettings }: { onSettings: () => void }) {
           })}
           {listening && (
             <motion.div key="heard" className="msg user listening" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {heard || "Listening…"}
+              {heard || note || "Listening…"}
             </motion.div>
           )}
           {busy && (
@@ -129,7 +132,6 @@ export function TalkScreen({ onSettings }: { onSettings: () => void }) {
             </div>
           </div>
         )}
-        <div ref={end} />
       </div>
 
       <form

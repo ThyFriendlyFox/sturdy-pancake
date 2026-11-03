@@ -35,6 +35,16 @@ export function Pager({ children }: { children: [ReactNode, ReactNode, ReactNode
     ro.observe(ref.current);
     return () => ro.disconnect();
   }, [wide]);
+  // Only the swipe moves screens. Browsers scroll overflow:hidden boxes too (focus, scrollIntoView); undo that.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const reset = () => {
+      if (el.scrollLeft) el.scrollLeft = 0;
+    };
+    el.addEventListener("scroll", reset);
+    return () => el.removeEventListener("scroll", reset);
+  }, [wide]);
   useEffect(() => {
     const a = animate(x, -page * w, { type: "spring", stiffness: 380, damping: 40 });
     return () => a.stop();

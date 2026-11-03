@@ -145,6 +145,7 @@ function Toast() {
 function VoiceLayer() {
   const listening = useStore((s) => s.listening);
   const heard = useStore((s) => s.heard);
+  const note = useStore((s) => s.voiceNote);
   const busy = useBusy();
   const msgs = useSession();
   const page = useStore((s) => s.page);
@@ -179,7 +180,7 @@ function VoiceLayer() {
                 transition={{ duration: 0.9 + (i % 4) * 0.15, repeat: Infinity, delay: i * 0.05 }}
               />
             ))}
-            <span>Listening</span>
+            <span>{note || "Listening"}</span>
           </div>
           <p className="heard">{heard ? `“${heard}”` : "Say what to change"}</p>
         </motion.div>

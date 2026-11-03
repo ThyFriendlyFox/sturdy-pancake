@@ -16,6 +16,7 @@ export interface State {
   radial: { x: number; y: number; subjectId: string | null; finding: boolean } | null; // paw menu around a tap, in screen px
   heard: string; // live speech transcript
   listening: boolean;
+  voiceNote: string; // what the voice input is doing, e.g. "Writing down what you said…"
   toast: { text: string; undo: boolean; at: number } | null;
   recipes: Recipe[];
   importing: { files: { name: string; size: number; phase: ImportPhase; saved: number }[]; at: number } | null;
@@ -61,6 +62,7 @@ let state: State = {
   radial: null,
   heard: "",
   listening: false,
+  voiceNote: "",
   toast: null,
   recipes: [],
   importing: null,
