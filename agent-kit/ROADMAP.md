@@ -47,6 +47,9 @@ provisional: true — the agent seeded this order at install time. The human re-
 
 ## Later — candidates, not yet specced
 
+- Faster follow — cross-origin isolation for multi-threaded WASM, and mask propagation between keyframes instead of a full model run per keyframe.
+- Plan before acting — the AI shows its steps and waits for "Do it" (mockup 4).
+
 - Direct "Sign in with Google" for Gemini — needs a Google Cloud OAuth client.
 - Drag clips on the timeline — reorder and trim with handles in the Timeline component.
 - Keyframes for zoom and text position — Ken Burns moves and moving titles.
@@ -57,6 +60,7 @@ provisional: true — the agent seeded this order at install time. The human re-
 
 | Week | Feature | Release | Evidence |
 |---|---|---|---|
+| 2026-11-03 | Magic UI: video first, tap to isolate, paw menus, floating components, tracks and talk screens, copy an edit | 0.3.0 | `e2e/magic.cjs` run, 0 errors: dog isolated and followed in-browser; glow and spotlight track it in playback; recipe split 1 clip into 4 |
 | 2026-11-02 | Motion animations in the UI | 0.2.0 | Playwright run: cards, sheets, chat animate; 0 console errors at `167e9aa` |
 | 2026-11-02 | AI-first editor with 13 components, PWA, edit data | 0.1.0 | Playwright run with a fake AI: 8 tool calls applied, 3 components shown, export 1.6 MB at `5fdfd78` |
 
@@ -72,3 +76,4 @@ provisional: true — the agent seeded this order at install time. The human re-
      line here: date, what changed, why. -->
 
 - 2026-11-02 — Seeded the queue at install. Item 1 (browser gate) goes first because items 2–4 need it for evidence.
+- 2026-11-03 — Inserted "Magic UI" at position 1. The human approved the mockups and asked to build and merge it now.

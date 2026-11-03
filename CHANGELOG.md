@@ -4,9 +4,22 @@ All notable changes to CutKit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
+
+## [0.3.0] - 2026-11-03
 ### Added
+- Video first: the video fills the screen. A paw in the corner opens Add clips, Music, Look and Export. Hold the paw to talk to the AI.
+- Tap anything in the video to lift it out. It is cut out and followed through the clip on the phone. A paw menu around the tap adds Follow, Glow, Spotlight, Freeze, Clone, Recolor, Erase or Sticker.
+- Components rise as a floating card when the AI or the user needs them. Swipe the card down to close it.
+- Swipe right for Tracks: every track on one timeline. Tap a track to open its component in place.
+- Swipe left to talk: chat, voice, and a small copy of the video.
+- Copy an edit: add an example video, and the AI lists the moves it found. Pick the moves and apply them.
+- Voice input with the browser's speech recognition.
 - Agent kit in `agent-kit/`: roadmap, contract, docs, CI workflows.
 - `npm run lint`, `npm run format` and `npm run verify`.
+
+### Changed
+- The video drives the playback clock, so slow decoding no longer causes black frames.
+- The old component dock and chat bar are gone.
 
 ## [0.2.0] - 2026-11-02
 ### Added

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { clamp, deleteRange, layout, splitAt, totalDuration } from "../model";
+import { clamp, deleteRange, layout, splitAt, splitEvery, totalDuration } from "../model";
 import { store, useStore } from "../store";
 import { ClipPicker, Empty, Slider, fmtTime, useActiveClip } from "../ui/controls";
 import { editFor, mapClips, type ComponentDef } from "./types";
@@ -114,6 +114,16 @@ export const cutsComponent: ComponentDef = {
         const before = store.get().project.clips.length;
         edit("split_at", "ai", { time }, (p) => splitAt(p, +time));
         return store.get().project.clips.length > before ? "Split" : "Nothing to split there";
+      },
+    },
+    {
+      name: "cut_to_beat",
+      description: "Split the video track on a beat grid: every `interval` seconds (60/BPM for every beat), starting at `offset`.",
+      params: { interval: { type: "number" }, offset: { type: "number" } },
+      required: ["interval"],
+      run: ({ interval, offset }) => {
+        edit("cut_to_beat", "ai", { interval, offset }, (p) => splitEvery(p, +interval, +(offset ?? 0)));
+        return `${store.get().project.clips.length} clips now`;
       },
     },
     {

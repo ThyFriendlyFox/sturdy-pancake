@@ -5,9 +5,9 @@
 1. Lint / format check — `npm run lint` (Prettier check + TypeScript)
 2. Build — `npm run build`
 3. Tests — `npm test` (Vitest: timeline math in `src/model.test.ts`)
-4. Browser end-to-end — **not yet a gate.** Roadmap item 1 adds it.
-   Until then, feature evidence comes from a Playwright run in a
-   390×844 phone viewport, recorded in the PR or devlog.
+4. Browser end-to-end — **not yet a gate.** `e2e/magic.cjs` runs the
+   whole UI in a 390×844 viewport with a fake AI and real in-browser
+   segmentation. It runs by hand; ROADMAP item 1 puts it in CI.
 
 ## Rules
 

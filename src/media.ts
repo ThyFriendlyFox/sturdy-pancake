@@ -81,7 +81,7 @@ function probe(url: string, kind: MediaKind): Promise<{ duration: number; width:
   });
 }
 
-export async function importFiles(files: FileList | File[]): Promise<Media[]> {
+export async function importFiles(files: FileList | File[], role?: "example"): Promise<Media[]> {
   const out: Media[] = [];
   for (const f of Array.from(files)) {
     const kind = kindOf(f);
@@ -92,7 +92,7 @@ export async function importFiles(files: FileList | File[]): Promise<Media[]> {
       const info = await probe(url, kind);
       await put(id, f).catch(() => {});
       urls.set(id, url);
-      const m: Media = { id, name: f.name.replace(/\.[^.]+$/, "").slice(0, 40), kind, ...info };
+      const m: Media = { id, name: f.name.replace(/\.[^.]+$/, "").slice(0, 40), kind, ...info, ...(role ? { role } : {}) };
       store.addMedia(m);
       out.push(m);
     } catch {
@@ -109,13 +109,13 @@ export async function importBlob(b: Blob, name: string): Promise<Media | null> {
   return m ?? null;
 }
 
-export function pickFiles(accept = "video/*,audio/*,image/*"): Promise<Media[]> {
+export function pickFiles(accept = "video/*,audio/*,image/*", role?: "example"): Promise<Media[]> {
   return new Promise((res) => {
     const i = document.createElement("input");
     i.type = "file";
     i.multiple = true;
     i.accept = accept;
-    i.onchange = () => (i.files ? importFiles(i.files).then(res) : res([]));
+    i.onchange = () => (i.files ? importFiles(i.files, role).then(res) : res([]));
     i.click();
   });
 }

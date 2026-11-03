@@ -38,7 +38,17 @@ Each case has the same shape.
 **Ask.** The user types "add confetti and a flash when I jump". The AI uses view_frame to find the moment and adds the effects.
 **Adjust.** The Motion graphics component opens. The user moves the effect start by 0.2 seconds.
 
+## Make the pet glow
+
+**Ask.** The user taps the dog. It lifts out with a glowing edge, and a paw menu opens around it. The user holds the pad and says "make him glow and leave a light trail".
+**Adjust.** The Subject card docks beside the dog. The user picks a color and lowers the strength.
+
+## Copy an edit
+
+**Ask.** The user adds an example reel on the talk screen and says "copy this". The AI lists the moves it found.
+**Adjust.** The user switches off 1 move and taps Apply. Each move becomes a track they can open later.
+
 ## Edit by hand
 
-**Ask.** The user taps ☰ and opens the Timeline without asking the AI.
-**Adjust.** The user splits, trims and reorders clips. The edits are logged as user edits, so the AI learns from them.
+**Ask.** The user swipes right to Tracks without asking the AI, and taps the Video track.
+**Adjust.** The user splits, trims and reorders clips in place. The edits are logged as user edits, so the AI learns from them.

@@ -6,6 +6,8 @@ CutKit reads user settings from the browser's localStorage. The user changes the
 |---|---|
 | localStorage (per browser) | AI settings, project, edit-data switch, anonymous user id |
 | IndexedDB `ck-media` (per browser) | Imported and recorded media files |
+| IndexedDB `ck-masks` (per browser) | Subject masks and still cut-outs, per subject layer |
+| Browser cache | SlimSAM weights (`Xenova/slimsam-77-uniform`) from Hugging Face |
 | Vercel env | `BLOB_READ_WRITE_TOKEN` |
 
 At first start, no AI is connected and the project is empty. A damaged localStorage value is ignored and the default is used. A missing media file leaves its clip blank; nothing crashes.
@@ -32,3 +34,8 @@ At first start, no AI is connected and the project is empty. A damaged localStor
 | Max edit-data request | `api/events.ts` | 256 KB, 500 events |
 | Undo depth | `src/store.ts` | 100 |
 | Export bitrate | `src/engine.ts` | 8 Mbit/s, 30 fps |
+| Segmentation model | `src/segment/worker.ts` `MODEL` | `Xenova/slimsam-77-uniform`; WebGPU fp32 if an adapter exists, else WASM q8 |
+| Frame size sent to the model | `src/subjects.ts` `GRAB_SIDE` | 512 px long side |
+| Follow step | `src/subjects.ts` `FOLLOW_STEP` | 0.4 s |
+| Mask reach | `src/subjects.ts` `MAX_GAP` | 0.3 s; no mask closer than this means no effect drawn |
+| Hold-to-talk delay | `src/ui/Paw.tsx` `HOLD_MS` | 280 ms |

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { ALL_TOOLS } from "../components";
+import { setRecipeRunner } from "../components/examples";
 import type { ToolOutput } from "../components/types";
 import { store } from "../store";
 import { telemetry } from "../telemetry";
@@ -23,6 +24,12 @@ async function runTool(name: string, args: Record<string, unknown>): Promise<Too
     return { text: `Error: ${(e as Error).message}` };
   }
 }
+
+setRecipeRunner(async (calls) => {
+  const out: string[] = [];
+  for (const c of calls) out.push((await runTool(c.tool, c.args)).text);
+  return out;
+});
 
 const withState = (text: string) => `<editor_state>${JSON.stringify(store.snapshot())}</editor_state>\n\n${text}`;
 

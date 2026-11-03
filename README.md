@@ -1,8 +1,12 @@
 # CutKit
 
-An AI-first video editor for phones. The video is always on screen; everything else is hidden until it's needed.
+An AI-first video editor for phones. The video fills the screen; everything else is hidden until it's needed.
 
-You chat with an AI. It edits the video by calling **components** — self-contained editing units (timeline, video track, cuts, transitions, color, voice track, voice pitch, music, text, motion graphics, format, export). Each component is both a panel you can drive by hand and a set of tools the AI can call. The AI decides which panels to put on screen.
+- **Talk:** hold the paw in the corner and say what to change, or swipe left to the talk screen.
+- **Tap anything:** tap a thing in the video and it lifts out, cut out and followed through the clip on the phone (SlimSAM in a web worker). A paw menu around it adds glow, spotlight, trail, freeze, clone, recolor, erase, sticker or a follow camera.
+- **Components appear when needed:** editing units (cuts, transitions, color, voice, pitch, music, text, motion graphics, subjects…) are both a panel you drive by hand and tools the AI calls. They rise as a floating card when the AI or you need one.
+- **Tracks:** swipe right for every track on one timeline; tap a track to open it in place.
+- **Copy an edit:** add an example video and the AI lists the moves it found; apply the ones you want.
 
 - **AI:** sign in through OpenRouter (Google/GitHub login) or paste a Claude, OpenAI or Gemini key. Keys stay on the device and go straight to the provider.
 - **Private media:** clips are stored in the browser (IndexedDB) and rendered on-device. Nothing is uploaded.
@@ -17,6 +21,8 @@ You chat with an AI. It edits the video by calling **components** — self-conta
 | Store: every edit, undo, edit logging | `src/store.ts`, `src/telemetry.ts` |
 | Playback, audio graph, drawing, export | `src/engine.ts`, `src/pitch.ts` |
 | Components (panel + AI tools each) | `src/components/*` |
+| Tap to isolate, follow, masks | `src/subjects.ts`, `src/segment/*` |
+| Screens, paw menus, floating card | `src/ui/*` |
 | AI loop + providers | `src/ai/*` |
 | Edit-data endpoint | `api/events.ts` |
 

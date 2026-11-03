@@ -11,6 +11,7 @@ npm test           # tests (vitest)
 npm run lint       # prettier --check . && tsc -b
 npm run verify     # full health gate — must pass before any push
 npm run format     # fix formatting
+node e2e/magic.cjs <url> <video> <out-dir>   # phone-size browser run with a fake AI (needs network for the model)
 ```
 
 Requires Node.js 20 or newer.
@@ -25,8 +26,9 @@ Requires Node.js 20 or newer.
    the same op functions; only the `source` argument differs (`"user"` /
    `"ai"`). Register it in `src/components/index.ts`; the AI sees it
    automatically. See `docs/COMPONENTS.md`.
-3. **All components start hidden.** Only the user (☰ menu, ✕) or the AI
-   (`show_components` / `hide_components`) changes `visible`.
+3. **All components start hidden.** Only the user (paw, Tracks, ✕, swipe
+   down) or the AI (`show_components` / `hide_components`) changes `visible`.
+   The newest visible component is the floating card.
 4. **`src/model.ts` is pure.** Plain JSON data and math. No DOM, no
    media elements, no randomness except `uid()`.
 5. **Only the engine touches media elements** (`src/engine.ts`). The UI
@@ -39,6 +41,11 @@ Requires Node.js 20 or newer.
    `telemetry.log()`, which checks `telemetry.enabled`.
 9. **AI history never ends on an unanswered tool call.** `Agent.send()`
    rolls back the failed turn (`src/ai/agent.ts`).
+10. **Masks stay out of the project.** A subject layer holds its tap point
+   and effects; masks live in `src/subjects.ts` and IndexedDB `ck-masks`.
+   Edit data never carries frames or masks.
+11. **The model runs in the worker.** Nothing on the main thread waits on
+   SlimSAM; the UI shows progress instead.
 
 ## Landmine map
 
@@ -52,6 +59,12 @@ Requires Node.js 20 or newer.
 | Slider edits | Pass `merge = true` so a drag is one undo step and one log event. |
 | `public/sw.js` | Pages are network-first, `/assets/` cache-first. Change the cache name when the caching rules change. |
 | Export | Real time: it plays the timeline once into `MediaRecorder`. Safari gives MP4, Chrome gives WebM. |
+| Overlays over the video | A fading overlay still takes taps. The paw scrim has no exit animation for this reason. |
+| WebGPU | `navigator.gpu` can exist with no adapter. `worker.ts` asks for an adapter before choosing WebGPU. |
+| Playback clock | The playing video drives `Engine.t`. Seeking a playing video to "catch up" shows black frames on slow decoders. |
+| Mask timing | Effects draw only within `MAX_GAP` of a mask. Raising `FOLLOW_STEP` without raising it leaves gaps. |
+| Zero-size anchors | `.radial` is 0×0; Playwright needs `state: "attached"` to wait for it. |
+| `motion` transforms | Motion owns `transform` on animated elements. Center them with the `translate` property, not `transform`. |
 | Production deploy | The Vercel project is git-linked, but production builds come from an explicit deployment of the release branch. See `RELEASING.md`. |
 
 ## House style

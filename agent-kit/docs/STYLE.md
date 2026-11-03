@@ -50,3 +50,9 @@ AI replies follow the same rules: 1 or 2 short sentences.
 | render | export file, bounce (as a verb in UI: "Render video") |
 | edit data | telemetry, analytics (in UI and docs) |
 | AI | assistant, bot, copilot |
+| paw | menu button, FAB |
+| subject | object, mask, selection (in UI text) |
+| Tracks screen | timeline view, layers screen |
+| talk screen | chat page, assistant panel |
+| recipe | template, preset (for copied edits) |
+| move | step, technique (inside a recipe) |

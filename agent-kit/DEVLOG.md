@@ -41,6 +41,17 @@ Evidence: <commit / tag / gate run / screenshot>
 
 <!-- Entries below, newest first. -->
 
+## 2026-11-03 — Shipped the magic UI (0.3.0)
+
+The human approved 11 mockups and asked to build them and merge to `main`. The video now fills the screen. A paw in the corner holds the menu, and holding it talks to the AI. Swiping right shows every track; swiping left shows the talk screen.
+
+Tapping a thing in the video cuts it out on the phone with SlimSAM in a web worker. Then the app follows it through the clip, one mask every 0.4 s, and 9 effects draw from those masks. In the test the dog was isolated 33 s after the tap, model download included.
+
+Four things broke on the way. The test browser reported WebGPU but had no GPU, so the model failed until the worker checked for a real adapter. A fading scrim swallowed the next tap on the video. Playback froze, then went black: the clock ran slower than the video, the engine seeked the video back, and seeks show black frames. Now the video drives the clock, and the last frame stays up during a seek. Following is slow without WebGPU: 20 s per mask on this 2-core machine.
+
+Evidence: `e2e/magic.cjs` with a 3.5 s cut of the human's dog video, 0 errors; `npm run verify` green, 10 tests.
+
+
 ## 2026-11-02 — Installed the agent kit
 
 I installed the agent kit in `agent-kit/`. CutKit is a phone video editor driven by a chat AI. The AI edits through 13 components and opens only the ones the user needs. It is live at https://cutkit-amber.vercel.app.

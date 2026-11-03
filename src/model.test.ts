@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deleteRange, emptyProject, layout, newClip, splitAt, totalDuration, type Media, type Project } from "./model";
+import { deleteRange, emptyProject, layout, newClip, splitAt, splitEvery, totalDuration, type Media, type Project } from "./model";
 
 const vid = (id: string, duration: number): Media => ({ id, name: id, kind: "video", duration, width: 1920, height: 1080 });
 const proj = (...lens: number[]): Project => ({ ...emptyProject(), clips: lens.map((l, i) => newClip(vid("m" + i, l))) });
@@ -34,5 +34,14 @@ describe("timeline math", () => {
       [0, 3],
       [1, 6],
     ]);
+  });
+});
+
+describe("splitEvery", () => {
+  it("cuts the track on a fixed grid", () => {
+    const p = splitEvery(proj(4, 6), 2);
+    const l = layout(p);
+    expect(l.map((x) => +x.start.toFixed(2))).toEqual([0, 2, 4, 6, 8]);
+    expect(totalDuration(p)).toBe(10);
   });
 });

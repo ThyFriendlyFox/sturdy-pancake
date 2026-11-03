@@ -10,6 +10,27 @@ export interface State {
   time: number;
   playing: boolean;
   aiFlash: { ids: string[]; at: number }; // components the AI just opened (for a highlight)
+  page: 0 | 1 | 2; // 0 tracks, 1 video, 2 talk
+  selectedSubjectId: string | null;
+  radial: { x: number; y: number; subjectId: string | null; finding: boolean } | null; // paw menu around a tap, in screen px
+  heard: string; // live speech transcript
+  listening: boolean;
+  toast: { text: string; undo: boolean; at: number } | null;
+  recipes: Recipe[];
+}
+
+export interface RecipeMove {
+  name: string;
+  detail: string;
+  calls: { tool: string; args: Record<string, unknown> }[];
+  on: boolean;
+}
+
+export interface Recipe {
+  id: string;
+  title: string;
+  moves: RecipeMove[];
+  applied: boolean;
 }
 
 const SAVE_KEY = "ck.project.v1";
@@ -33,6 +54,13 @@ let state: State = {
   time: 0,
   playing: false,
   aiFlash: { ids: [], at: 0 },
+  page: 1,
+  selectedSubjectId: null,
+  radial: null,
+  heard: "",
+  listening: false,
+  toast: null,
+  recipes: [],
   ...load(),
 };
 
@@ -130,6 +158,10 @@ export const store = {
   },
   snapshot() {
     return describe(state.project, state.media, state.time, state.selectedClipId);
+  },
+  toast(text: string, undo = false) {
+    state = { ...state, toast: { text, undo, at: Date.now() } };
+    emit();
   },
   reset() {
     past.push(state.project);
