@@ -44,6 +44,9 @@ Requires Node.js 20 or newer.
 10. **Masks stay out of the project.** A subject layer holds its tap point
    and effects; masks live in `src/subjects.ts` and IndexedDB `ck-masks`.
    Edit data never carries frames or masks.
+12. **The engine draws only when something changed while paused.** A
+   change to the picture must reach the engine: through the store, a media
+   element event, or `engine.invalidate()`.
 11. **The model runs in the worker.** Nothing on the main thread waits on
    SlimSAM; the UI shows progress instead.
 
@@ -59,6 +62,9 @@ Requires Node.js 20 or newer.
 | Slider edits | Pass `merge = true` so a drag is one undo step and one log event. |
 | `public/sw.js` | Pages are network-first, `/assets/` cache-first. Change the cache name when the caching rules change. |
 | Export | Real time: it plays the timeline once into `MediaRecorder`. Safari gives MP4, Chrome gives WebM. |
+| `ctx.filter` | Any filter string, even all-1 values, forces a slow canvas path. `filterCss()` returns "none" for untouched clips; keep it that way. |
+| `backdrop-filter` over the video | It re-blurs on every video frame. Use solid translucent fills on overlays. |
+| Media save | Files save in 4 MB pieces after the clip shows. A half-saved file has no `id` record, so it is never read back as whole. |
 | Overlays over the video | A fading overlay still takes taps. The paw scrim has no exit animation for this reason. |
 | WebGPU | `navigator.gpu` can exist with no adapter. `worker.ts` asks for an adapter before choosing WebGPU. |
 | Playback clock | The playing video drives `Engine.t`. Seeking a playing video to "catch up" shows black frames on slow decoders. |

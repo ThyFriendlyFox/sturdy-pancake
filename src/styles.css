@@ -10,8 +10,8 @@
   --accent: #ff5a6e;
   --ai: #8b7bff;
   --ok: #3bceac;
-  --glass: rgba(255, 255, 255, 0.14);
-  --glass-dark: rgba(24, 24, 30, 0.82);
+  --glass: rgba(40, 40, 46, 0.62);
+  --glass-dark: rgba(24, 24, 30, 0.95);
   --serif: "Instrument Serif", Georgia, serif;
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
@@ -123,13 +123,14 @@ a {
 }
 
 /* ---------- video screen ---------- */
+/* A tiny copy of the frame, stretched: smooth scaling blurs it for free (a CSS blur would rerun on every frame). */
 .backdrop {
   position: absolute;
-  inset: -8%;
-  width: 116%;
-  height: 116%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  filter: blur(26px) brightness(0.42) saturate(1.2);
+  opacity: 0.45;
 }
 .stage {
   position: absolute;
@@ -250,8 +251,6 @@ a {
   border-radius: 46% 46% 42% 42%;
   border: 1px solid rgba(255, 255, 255, 0.4);
   background: var(--glass);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   display: grid;
   place-items: center;
   touch-action: none;
@@ -293,8 +292,6 @@ a {
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.4);
   background: var(--glass);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   padding: 0;
   display: grid;
   place-items: center;
@@ -397,8 +394,6 @@ a {
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.45);
   background: rgba(20, 20, 24, 0.6);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   display: grid;
   place-items: center;
   padding: 0;
@@ -429,6 +424,80 @@ a {
   border-top-color: #fff;
   animation: spin 0.8s linear infinite;
 }
+.spinner.small {
+  width: 18px;
+  height: 18px;
+  border-width: 2.5px;
+  flex: none;
+}
+.import {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--safe-t) + 34px);
+  translate: -50% 0;
+  width: min(340px, calc(100% - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(24, 24, 30, 0.94);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  z-index: 11;
+}
+.finding {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-b) + 150px);
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: rgba(24, 24, 30, 0.92);
+  font-size: 13px;
+  white-space: nowrap;
+  z-index: 7;
+}
+.import-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.import-head b {
+  flex: 1;
+}
+.import-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ok);
+  color: var(--bg);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+.import-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.import-bar div {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.import-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -446,8 +515,6 @@ a {
   border-radius: 999px;
   background: rgba(24, 24, 30, 0.72);
   border: 1px solid var(--line);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   z-index: 6;
 }
 .subject-chip > .stack {
@@ -569,8 +636,6 @@ a {
   border-radius: 28px;
   background: var(--glass-dark);
   border: 1px solid var(--line);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
   z-index: 10;
   touch-action: none;

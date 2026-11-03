@@ -39,6 +39,12 @@ function setStatus(id: string, s: SubjectStatus) {
   emit();
 }
 
+/** Called whenever masks or follow progress change (the engine redraws). */
+export function onSubjectsChange(fn: () => void) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
 export function useSubjectStatus(id: string | null): SubjectStatus | null {
   return useSyncExternalStore(
     (l) => (listeners.add(l), () => listeners.delete(l)),
@@ -47,6 +53,14 @@ export function useSubjectStatus(id: string | null): SubjectStatus | null {
 }
 
 // ---------- model worker ----------
+let modelProgress = 0; // download, 0..1
+let modelReady = false;
+export function useModelProgress() {
+  return useSyncExternalStore(
+    (l) => (listeners.add(l), () => listeners.delete(l)),
+    () => (modelReady ? 1 : modelProgress),
+  );
+}
 let worker: Worker | null = null;
 let seq = 0;
 const pending = new Map<number, (r: SegmentResponse) => void>();
@@ -54,6 +68,10 @@ function call(req: Omit<SegmentRequest, "id">, transfer: Transferable[] = []): P
   worker ??= (() => {
     const w = new Worker(new URL("./segment/worker.ts", import.meta.url), { type: "module" });
     w.onmessage = (e: MessageEvent<SegmentResponse>) => {
+      if (e.data.id === 0) {
+        modelProgress = e.data.progress ?? 0;
+        return emit();
+      }
       pending.get(e.data.id)?.(e.data);
       pending.delete(e.data.id);
     };
@@ -66,9 +84,15 @@ function call(req: Omit<SegmentRequest, "id">, transfer: Transferable[] = []): P
   });
 }
 
-/** Start downloading the model early (e.g. when the first clip is added). */
+/** Start downloading the model in the background, once the video is on screen and nothing else is busy. */
+let warming = false;
 export function warmup() {
-  void call({ type: "warmup" });
+  if (warming) return;
+  warming = true;
+  void call({ type: "warmup" }).then((r) => {
+    modelReady = r.ok;
+    emit();
+  });
 }
 
 // ---------- frame grabs (separate elements, so playback is untouched) ----------
@@ -122,6 +146,10 @@ async function segmentFrame(frame: HTMLCanvasElement, point: [number, number]) {
   const rgba = frame.getContext("2d", { willReadFrequently: true })!.getImageData(0, 0, frame.width, frame.height).data;
   const r = await call({ type: "segment", rgba, width: frame.width, height: frame.height, point }, [rgba.buffer]);
   if (!r.ok || !r.mask) throw new Error(r.error ?? "Segmentation failed");
+  if (!modelReady) {
+    modelReady = true;
+    emit();
+  }
   return r;
 }
 
@@ -189,6 +217,9 @@ async function follow(id: string, mediaId: string, a: number, b: number, t0: num
     let point = start;
     for (const t of dir) {
       if (!tracks.has(id)) return; // removed
+      // Playback and following both decode video; let playback win, and give the page a breath between masks.
+      while (store.get().playing) await new Promise((r) => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 60));
       try {
         const frame = await grab(mediaId, t);
         const r = await segmentFrame(frame, point);

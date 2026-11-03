@@ -5,6 +5,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-03
+### Added
+- Adding a video shows each step: reading it, loading the first frame, and saving it to this phone with the MB done.
+- The first tap shows the cut-out tool's download progress.
+
+### Changed
+- The video shows as soon as it is read. Saving to the phone continues in the background.
+- The cut-out tool downloads 5 s after the video is on screen, not at once.
+- Following a subject pauses while the video plays.
+
+### Fixed
+- The editor redrew the video 60 times a second even when paused, through a color filter it did not need. With the CPU slowed 4×, the paused editor went from 6 to 60 frames per second.
+
 ## [0.3.1] - 2026-11-03
 ### Added
 - Desktop: on screens 1000 px and wider, Tracks, the video and the talk screen show side by side.

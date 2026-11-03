@@ -6,6 +6,8 @@ behavior change. The weekly cycle (WEEKLY.md step 5) refreshes it.
 
 | Area | State | Evidence |
 |---|---|---|
+| Load progress overlay | ✅ | Playwright at 6× throttle: "Reading" 0.4 s → "Loading the first frame / Saving 13 of 31 MB" 1.7 s → "Ready" 2.9 s |
+| Speed (4× CPU throttle, 31 MB 1080p clip) | 🚧 | Paused: 60 fps, 0 ms blocked (was 6 fps, 2.9 s per 3 s). Playing: 15 fps (was 5); the rest is software video decoding in the test browser. Not measured on a phone |
 | Desktop layout (3 panes at ≥1000 px) | ✅ | Playwright at 1440×900: 3 panes update together; back to swiping at 390 px |
 | Video-first screen, corner paw, 3-screen swipe | ✅ | `e2e/magic.cjs` run, 0 errors: paw opens, swipe moves to the talk screen (`translateX(-780px)`) |
 | Tap to isolate (SlimSAM, in the browser) | ✅ | Same run: dog isolated 33 s after the tap, model download included (CPU, no GPU) |
@@ -27,5 +29,5 @@ States: ✅ done (gated) · 🚧 in progress · ❌ not started · 🧊 frozen/w
 ## Current week
 
 - **Shipping:** between cycles — next is ROADMAP item 1, browser end-to-end gate
-- **Last release:** 0.3.1 (untagged) — 2026-11-03, live at https://cutkit-amber.vercel.app
+- **Last release:** 0.3.2 (untagged) — 2026-11-03, live at https://cutkit-amber.vercel.app
 - **Known red:** none. GitHub's default branch is still `claude/cutkit`; the human switches it to `main`.

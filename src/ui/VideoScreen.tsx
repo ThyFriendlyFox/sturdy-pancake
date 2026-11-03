@@ -5,9 +5,10 @@ import { Engine, getEngine, setEngine } from "../engine";
 import { newClip, totalDuration } from "../model";
 import { pickFiles } from "../media";
 import { store, useStore } from "../store";
-import { hitSubject, isolate, warmup } from "../subjects";
+import { hitSubject, isolate, useModelProgress, warmup } from "../subjects";
 import { SubjectStatusLine, Thumb } from "../components/subject";
 import { CardHost } from "./CardHost";
+import { ImportProgress } from "./ImportProgress";
 import { fmtTime } from "./controls";
 import { Icon } from "./icons";
 import { Mirror } from "./Mirror";
@@ -212,6 +213,26 @@ function VoiceLayer() {
   );
 }
 
+/** Under the paw ring while the model works: download progress the first time, then "Finding it". */
+function FindingLabel() {
+  const radial = useStore((s) => s.radial);
+  const p = useModelProgress();
+  if (!radial?.finding) return null;
+  return (
+    <motion.div className="finding" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+      {p < 1 ? `Getting the cut-out tool ready · ${Math.round(p * 100)}%` : "Finding it…"}
+      {p < 1 && (
+        <span className="import-bar">
+          <motion.span
+            style={{ display: "block", height: "100%", background: "var(--accent)" }}
+            animate={{ width: `${Math.max(4, p * 100)}%` }}
+          />
+        </span>
+      )}
+    </motion.div>
+  );
+}
+
 function TapHint() {
   const show = useStore((s) => s.project.subjects.length === 0 && !s.radial && !s.listening && s.visible.length === 0);
   return (
@@ -221,7 +242,7 @@ function TapHint() {
           className="tap-hint"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, transition: { duration: 0 } }}
           transition={{ delay: 0.6 }}
         >
           Tap anything to edit it
@@ -235,6 +256,7 @@ export function VideoScreen() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const root = useRef<HTMLDivElement>(null);
   const empty = useStore((s) => s.project.clips.length === 0);
+  const importing = useStore((s) => !!s.importing);
   const [size, setSize] = useState({ w: 390, h: 844 });
   const down = useRef<{ x: number; y: number; t: number } | null>(null);
 
@@ -244,8 +266,11 @@ export function VideoScreen() {
     ro.observe(root.current!);
     return () => ro.disconnect();
   }, []);
+  // Fetch the cut-out model only after the video is up, so it does not compete with loading it.
   useEffect(() => {
-    if (!empty) warmup();
+    if (empty) return;
+    const t = setTimeout(warmup, 5000);
+    return () => clearTimeout(t);
   }, [empty]);
 
   const onTap = async (clientX: number, clientY: number) => {
@@ -289,7 +314,7 @@ export function VideoScreen() {
 
   return (
     <div className="screen video-screen" ref={root}>
-      <Mirror className="backdrop" fps={8} scale={0.08} />
+      <Mirror className="backdrop" fps={6} scale={0.03} />
       <canvas
         ref={canvas}
         className="stage"
@@ -309,7 +334,12 @@ export function VideoScreen() {
       <i className="edge right" aria-hidden="true" />
 
       {empty ? (
-        <motion.button className="empty-add" onClick={addFirst} whileTap={{ scale: 0.97 }}>
+        <motion.button
+          className="empty-add"
+          style={{ visibility: importing ? "hidden" : "visible" }}
+          onClick={addFirst}
+          whileTap={{ scale: 0.97 }}
+        >
           <motion.span className="big" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1.8, repeat: Infinity }}>
             <Icon name="plus" size={40} />
           </motion.span>
@@ -321,9 +351,11 @@ export function VideoScreen() {
           <TapHint />
           <Progress />
           <RadialPaw width={size.w} height={size.h} />
+          <FindingLabel />
         </>
       )}
       <Toast />
+      <ImportProgress />
       <VoiceLayer />
       <CardHost />
       {!empty && <CornerPaw />}

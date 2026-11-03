@@ -38,4 +38,7 @@ At first start, no AI is connected and the project is empty. A damaged localStor
 | Frame size sent to the model | `src/subjects.ts` `GRAB_SIDE` | 512 px long side |
 | Follow step | `src/subjects.ts` `FOLLOW_STEP` | 0.4 s |
 | Mask reach | `src/subjects.ts` `MAX_GAP` | 0.3 s; no mask closer than this means no effect drawn |
+| Media save piece size | `src/media.ts` `CHUNK` | 4 MB |
+| Model download delay | `src/ui/VideoScreen.tsx` | 5 s after the first clip is on screen |
+| Playback draw cap | `src/engine.ts` `tick()` | 30 fps; paused draws only after a change |
 | Hold-to-talk delay | `src/ui/Paw.tsx` `HOLD_MS` | 280 ms |

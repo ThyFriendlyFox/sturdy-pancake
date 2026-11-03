@@ -14,7 +14,7 @@ import {
 import { mediaUrl } from "./media";
 import { PITCH_WORKLET } from "./pitch";
 import { store } from "./store";
-import { keyframeAt, stillOf } from "./subjects";
+import { keyframeAt, onSubjectsChange, stillOf } from "./subjects";
 import type { SubjectLayer } from "./model";
 
 type El = HTMLVideoElement | HTMLAudioElement;
@@ -54,9 +54,21 @@ export class Engine {
   private onExportTick: ((p: number) => void) | null = null;
   private onExportDone: (() => void) | null = null;
 
+  /** Bumped on every drawn frame; mirrors copy only when it changes. */
+  frame = 0;
+  private dirty = true;
+  private lastDraw = 0;
+  /** Ask for a redraw while paused (project edits, seeks, new masks, a decoded frame). */
+  invalidate = () => {
+    this.dirty = true;
+  };
+
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
+    store.subscribe(this.invalidate);
+    onSubjectsChange(this.invalidate);
+    document.fonts?.ready.then(this.invalidate);
     const loop = (now: number) => {
       this.tick(now);
       requestAnimationFrame(loop);
@@ -124,6 +136,12 @@ export class Engine {
     }
   }
 
+  /** True when the clip under the playhead has a frame to show. */
+  hasFrame() {
+    const pl = clipAt(this.project, this.t);
+    return !pl || !!this.sourceFor(pl.clip);
+  }
+
   // ---------- transport ----------
   async play() {
     await this.unlock();
@@ -157,6 +175,7 @@ export class Engine {
       if (m.kind === "image") {
         if (!this.images.has(m.id)) {
           const img = new Image();
+          img.onload = this.invalidate;
           img.src = url;
           this.images.set(m.id, img);
         }
@@ -167,6 +186,8 @@ export class Engine {
         v.crossOrigin = "anonymous";
         v.src = url;
         v.currentTime = c.in;
+        v.addEventListener("seeked", this.invalidate);
+        v.addEventListener("loadeddata", this.invalidate);
         this.videos.set(c.id, v);
         this.route(v, this.voiceBus);
       }
@@ -269,7 +290,14 @@ export class Engine {
       this.setGain(this.music, g);
     }
 
-    this.draw(t);
+    // Paused: draw only when something changed. Playing: at most ~30 fps (video frames are 30 fps or less).
+    const anim = this.playing || this.exporting;
+    if ((anim && now - this.lastDraw >= 30) || (!anim && this.dirty)) {
+      this.dirty = false;
+      this.lastDraw = now;
+      this.draw(t);
+      this.frame++;
+    }
     if (now - this.lastPush > 100 && (this.playing || store.get().time !== t)) {
       this.lastPush = now;
       store.set({ time: t });

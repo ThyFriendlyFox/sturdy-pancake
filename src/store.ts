@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { describe, emptyProject, type Media, type Project } from "./model";
 import { telemetry, type EventSource } from "./telemetry";
+import type { ImportPhase } from "./media";
 
 export interface State {
   project: Project;
@@ -17,6 +18,7 @@ export interface State {
   listening: boolean;
   toast: { text: string; undo: boolean; at: number } | null;
   recipes: Recipe[];
+  importing: { files: { name: string; size: number; phase: ImportPhase; saved: number }[]; at: number } | null;
 }
 
 export interface RecipeMove {
@@ -61,6 +63,7 @@ let state: State = {
   listening: false,
   toast: null,
   recipes: [],
+  importing: null,
   ...load(),
 };
 

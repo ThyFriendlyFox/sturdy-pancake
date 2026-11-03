@@ -280,9 +280,14 @@ export const FILTER_PRESETS: Record<string, Partial<Filters>> = {
   moody: { brightness: 0.85, contrast: 1.25, saturation: 0.8, sepia: 0.1, hue: 0 },
 };
 
-export const filterCss = (f: Filters) =>
-  `brightness(${f.brightness}) contrast(${f.contrast}) saturate(${f.saturation}) hue-rotate(${f.hue}deg) sepia(${f.sepia})` +
-  (f.blur > 0 ? ` blur(${f.blur}px)` : "");
+/** CSS filter for a clip's color settings, or "none" when untouched (a filter forces a slow drawing path). */
+export const filterCss = (f: Filters) => {
+  if (f.brightness === 1 && f.contrast === 1 && f.saturation === 1 && f.hue === 0 && f.sepia === 0 && f.blur <= 0) return "none";
+  return (
+    `brightness(${f.brightness}) contrast(${f.contrast}) saturate(${f.saturation}) hue-rotate(${f.hue}deg) sepia(${f.sepia})` +
+    (f.blur > 0 ? ` blur(${f.blur}px)` : "")
+  );
+};
 
 /** Short JSON the AI sees each turn. */
 export function describe(p: Project, media: Media[], time: number, selectedClipId: string | null) {

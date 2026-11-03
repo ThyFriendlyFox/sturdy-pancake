@@ -9,21 +9,35 @@ const MODEL = "Xenova/slimsam-77-uniform";
 
 let ready: Promise<{ model: PreTrainedModel; processor: Processor; device: string }> | null = null;
 
+// Download progress for the model files, reported to the page as { id: 0, progress }.
+const loaded = new Map<string, [number, number]>();
+function onProgress(p: { status: string; file?: string; loaded?: number; total?: number }) {
+  if (p.status !== "progress" || !p.file || !p.total) return;
+  loaded.set(p.file, [p.loaded ?? 0, p.total]);
+  let a = 0,
+    b = 0;
+  for (const [x, y] of loaded.values()) {
+    a += x;
+    b += y;
+  }
+  (self as unknown as Worker).postMessage({ id: 0, ok: true, progress: a / b });
+}
+
 function load() {
   ready ??= (async () => {
-    const processor = await AutoProcessor.from_pretrained(MODEL);
+    const processor = await AutoProcessor.from_pretrained(MODEL, { progress_callback: onProgress });
     // Some browsers expose navigator.gpu but have no usable adapter (no GPU, blocklisted driver).
     const gpu = (navigator as Navigator & { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
     const hasGpu = !!gpu && !!(await gpu.requestAdapter().catch(() => null));
     if (hasGpu) {
       try {
-        const model = await SamModel.from_pretrained(MODEL, { device: "webgpu", dtype: "fp32" });
+        const model = await SamModel.from_pretrained(MODEL, { device: "webgpu", dtype: "fp32", progress_callback: onProgress });
         return { model, processor, device: "webgpu" };
       } catch {
         /* fall back to wasm */
       }
     }
-    const model = await SamModel.from_pretrained(MODEL, { device: "wasm", dtype: "q8" });
+    const model = await SamModel.from_pretrained(MODEL, { device: "wasm", dtype: "q8", progress_callback: onProgress });
     return { model, processor, device: "wasm" };
   })();
   return ready;
@@ -48,6 +62,7 @@ export interface SegmentResponse {
   score?: number;
   device?: string;
   ms?: number;
+  progress?: number; // model download, 0..1 (id 0)
 }
 
 self.onmessage = async (e: MessageEvent<SegmentRequest>) => {

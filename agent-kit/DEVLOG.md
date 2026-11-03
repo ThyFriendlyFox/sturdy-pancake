@@ -41,6 +41,16 @@ Evidence: <commit / tag / gate run / screenshot>
 
 <!-- Entries below, newest first. -->
 
+## 2026-11-03 — Load progress, and a 10× faster paused editor (0.3.2)
+
+The human said loading a video showed no progress and the app felt slow. I measured first. With the CPU slowed 4× and a 31 MB 1080p clip, the paused editor ran at 6 frames per second, and the main thread was blocked 2.9 s of every 3 s.
+
+A profile pointed at one call: drawing the video. The engine redrew it every frame, even when paused, through a color filter with all values at 1, and that filter forces a slow path. Now the engine draws only when something changes, skips untouched filters, and caps playback drawing at 30 fps. Paused went to 60 fps with 0 ms blocked. Playing went from 5 to 15 fps; the rest is software decoding in the test browser, and half resolution only reached 18 fps, so I kept full resolution.
+
+Loading now shows each step, and the video appears before it is saved. Saving runs in 4 MB pieces to report MB done. The cut-out model downloads 5 s after the video is up, with progress shown on the first tap. Following pauses during playback. The full end-to-end run passed, and following finished in 94 s instead of 145 s.
+
+Evidence: perf runs in the PR; `e2e/magic.cjs`, 0 errors; `npm run verify` green, 10 tests.
+
 ## 2026-11-03 — Desktop shows all three screens (0.3.1)
 
 The human asked for the desktop version to show the 3 screens side by side. At 1000 px and wider, the pager renders Tracks, the video and the talk screen as 3 columns. Swiping, screen dots and the mini video players are off there, and the floating card centers over the video. Below 1000 px the swipe pager returns. I verified the 0.3.0 release on the live site first: the full `e2e/magic.cjs` run passed there with 0 errors.
