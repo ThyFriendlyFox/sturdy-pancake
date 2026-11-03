@@ -1329,3 +1329,50 @@ input[type="color"] {
   background: var(--accent);
   pointer-events: none;
 }
+
+/* ---------- desktop: all three screens side by side ---------- */
+.panes {
+  display: none;
+}
+@media (min-width: 1000px) {
+  .app {
+    max-width: none;
+  }
+  .panes {
+    display: grid;
+    grid-template-columns: minmax(320px, 400px) minmax(0, 1fr) minmax(340px, 420px);
+    height: 100%;
+  }
+  .pane {
+    position: relative;
+    min-width: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+  .pane-tracks {
+    border-right: 1px solid var(--line);
+  }
+  .pane-talk {
+    border-left: 1px solid var(--line);
+  }
+  .panes .dots,
+  .panes .edge,
+  .panes .caption,
+  .panes .mini,
+  .panes .mini-card {
+    display: none;
+  }
+  .panes .tracks-screen,
+  .panes .talk-screen {
+    padding-top: 16px;
+  }
+  .panes .talk-head {
+    justify-content: flex-end;
+  }
+  .panes .fcard {
+    left: 50%;
+    right: auto;
+    width: min(520px, calc(100% - 20px));
+    translate: -50% 0;
+  }
+}

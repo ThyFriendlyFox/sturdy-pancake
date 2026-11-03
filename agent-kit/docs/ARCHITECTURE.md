@@ -10,7 +10,7 @@ CutKit is a single-page web app (React + TypeScript, built with Vite) that edits
 | Media | `src/media.ts` | File import, metadata probe, IndexedDB storage, blob URLs. |
 | Components | `src/components/` | Editing units: a Panel plus AI tools each. |
 | AI | `src/ai/` | Provider settings, OpenRouter sign-in, system prompt, tool loop. |
-| UI shell | `src/App.tsx`, `src/ui/`, `src/styles.css` | 3 swipe screens (Tracks, Video, Talk), paw menus, floating component card, sheets. Motion animations. |
+| UI shell | `src/App.tsx`, `src/ui/`, `src/styles.css` | 3 screens (Tracks, Video, Talk): swiped on a phone, side by side at ≥1000 px; paw menus, floating component card, sheets. Motion animations. |
 | Subjects | `src/subjects.ts`, `src/segment/` | Tap → cut-out (SlimSAM in a worker) → follow through the clip. Masks on the device. |
 | Voice and examples | `src/voice.ts`, `src/examples.ts`, `src/beats.ts` | Hold-to-talk speech recognition; example video analysis (shots, tempo, contact sheet). |
 | Edit data | `src/telemetry.ts`, `api/events.ts` | Batches edit events in the browser; the function writes them to Vercel Blob. |

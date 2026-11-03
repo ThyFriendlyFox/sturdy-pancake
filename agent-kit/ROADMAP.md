@@ -60,6 +60,7 @@ provisional: true — the agent seeded this order at install time. The human re-
 
 | Week | Feature | Release | Evidence |
 |---|---|---|---|
+| 2026-11-03 | Desktop: three screens side by side | 0.3.1 | Playwright at 1440×900: 3 panes, fake-AI edit shows in all 3; at 390×844 the swipe pager returns; 0 errors |
 | 2026-11-03 | Magic UI: video first, tap to isolate, paw menus, floating components, tracks and talk screens, copy an edit | 0.3.0 | `e2e/magic.cjs` run, 0 errors: dog isolated and followed in-browser; glow and spotlight track it in playback; recipe split 1 clip into 4 |
 | 2026-11-02 | Motion animations in the UI | 0.2.0 | Playwright run: cards, sheets, chat animate; 0 console errors at `167e9aa` |
 | 2026-11-02 | AI-first editor with 13 components, PWA, edit data | 0.1.0 | Playwright run with a fake AI: 8 tool calls applied, 3 components shown, export 1.6 MB at `5fdfd78` |
@@ -77,3 +78,4 @@ provisional: true — the agent seeded this order at install time. The human re-
 
 - 2026-11-02 — Seeded the queue at install. Item 1 (browser gate) goes first because items 2–4 need it for evidence.
 - 2026-11-03 — Inserted "Magic UI" at position 1. The human approved the mockups and asked to build and merge it now.
+- 2026-11-03 — Added and shipped "Desktop: three screens side by side" out of queue. The human asked for it during the Magic UI cycle.

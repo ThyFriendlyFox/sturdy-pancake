@@ -41,6 +41,12 @@ Evidence: <commit / tag / gate run / screenshot>
 
 <!-- Entries below, newest first. -->
 
+## 2026-11-03 — Desktop shows all three screens (0.3.1)
+
+The human asked for the desktop version to show the 3 screens side by side. At 1000 px and wider, the pager renders Tracks, the video and the talk screen as 3 columns. Swiping, screen dots and the mini video players are off there, and the floating card centers over the video. Below 1000 px the swipe pager returns. I verified the 0.3.0 release on the live site first: the full `e2e/magic.cjs` run passed there with 0 errors.
+
+Evidence: Playwright at 1440×900 shows 3 panes; a fake-AI edit appears in all 3; at 390×844 the pager returns; 0 errors.
+
 ## 2026-11-03 — Shipped the magic UI (0.3.0)
 
 The human approved 11 mockups and asked to build them and merge to `main`. The video now fills the screen. A paw in the corner holds the menu, and holding it talks to the AI. Swiping right shows every track; swiping left shows the talk screen.

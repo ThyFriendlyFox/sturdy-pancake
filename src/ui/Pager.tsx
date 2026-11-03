@@ -4,23 +4,52 @@ import { store, useStore } from "../store";
 
 const NO_SWIPE = "input, textarea, select, .no-swipe, .fcard, .radial, .paw, .scrim, .modal";
 
-/** Three screens side by side: Tracks ◂ Video ▸ Talk. Swipe anywhere that is not a control. */
+const WIDE = "(min-width: 1000px)";
+
+function useWide() {
+  const [wide, setWide] = useState(() => typeof matchMedia !== "undefined" && matchMedia(WIDE).matches);
+  useEffect(() => {
+    const m = matchMedia(WIDE);
+    const on = () => setWide(m.matches);
+    m.addEventListener("change", on);
+    return () => m.removeEventListener("change", on);
+  }, []);
+  return wide;
+}
+
+/**
+ * Three screens: Tracks ◂ Video ▸ Talk. On a phone they sit side by side off-screen and you swipe
+ * anywhere that is not a control. On a wide screen all three show at once.
+ */
 export function Pager({ children }: { children: [ReactNode, ReactNode, ReactNode] }) {
   const page = useStore((s) => s.page);
+  const wide = useWide();
   const ref = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(390);
   const x = useMotionValue(-390);
   const drag = useDragControls();
 
   useEffect(() => {
+    if (!ref.current) return; // wide layout has no swipe strip
     const ro = new ResizeObserver(([e]) => setW(e.contentRect.width));
-    ro.observe(ref.current!);
+    ro.observe(ref.current);
     return () => ro.disconnect();
-  }, []);
+  }, [wide]);
   useEffect(() => {
     const a = animate(x, -page * w, { type: "spring", stiffness: 380, damping: 40 });
     return () => a.stop();
   }, [page, w, x]);
+
+  if (wide)
+    return (
+      <div className="panes">
+        {children.map((c, i) => (
+          <div key={i} className={"pane pane-" + ["tracks", "video", "talk"][i]}>
+            {c}
+          </div>
+        ))}
+      </div>
+    );
 
   return (
     <div

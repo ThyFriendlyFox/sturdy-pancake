@@ -5,6 +5,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-03
+### Added
+- Desktop: on screens 1000 px and wider, Tracks, the video and the talk screen show side by side.
+
 ## [0.3.0] - 2026-11-03
 ### Added
 - Video first: the video fills the screen. A paw in the corner opens Add clips, Music, Look and Export. Hold the paw to talk to the AI.
