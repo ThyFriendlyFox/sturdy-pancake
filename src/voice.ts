@@ -149,38 +149,43 @@ async function toPcm16k(blob: Blob): Promise<Float32Array> {
   return (await off.startRendering()).getChannelData(0);
 }
 
-/** Calls `stop` after 1.3 s of quiet following speech, or after 7 s with no speech at all. */
-function watchSilence(stream: MediaStream, stop: () => void) {
-  const ac = new AudioContext();
-  const an = ac.createAnalyser();
-  an.fftSize = 1024;
-  ac.createMediaStreamSource(stream).connect(an);
-  const buf = new Float32Array(an.fftSize);
-  const t0 = Date.now();
-  let spoke = false,
-    quietSince = 0;
-  const timer = setInterval(() => {
-    if (!stopNow || stream.getTracks().every((t) => t.readyState === "ended")) {
-      clearInterval(timer);
-      void ac.close();
-      return;
-    }
-    an.getFloatTimeDomainData(buf);
+// Silence detection runs on the audio thread, so a busy page (model loading, video decoding) cannot make it
+// miss a pause. It posts "stop" after 1.3 s of quiet following speech, or "none" after 7 s with no speech.
+const VAD_WORKLET = `
+class Vad extends AudioWorkletProcessor {
+  constructor() { super(); this.t = 0; this.spoke = false; this.quiet = 0; this.done = false; }
+  process(inputs) {
+    if (this.done) return false;
+    const ch = inputs[0] && inputs[0][0];
+    if (!ch) return true;
     let sum = 0;
-    for (const x of buf) sum += x * x;
-    const rms = Math.sqrt(sum / buf.length);
-    const now = Date.now();
-    if (rms > 0.02) {
-      spoke = true;
-      quietSince = 0;
-    } else if (spoke) {
-      quietSince ||= now;
-      if (now - quietSince > 1300) stop();
-    } else if (now - t0 > 7000) {
-      cancelled = true;
+    for (let i = 0; i < ch.length; i++) sum += ch[i] * ch[i];
+    const rms = Math.sqrt(sum / ch.length), dt = ch.length / sampleRate;
+    this.t += dt;
+    if (rms > 0.02) { this.spoke = true; this.quiet = 0; }
+    else if (this.spoke) { this.quiet += dt; if (this.quiet > 1.3) { this.done = true; this.port.postMessage("stop"); } }
+    else if (this.t > 7) { this.done = true; this.port.postMessage("none"); }
+    return true;
+  }
+}
+registerProcessor("vad", Vad);
+`;
+
+async function watchSilence(stream: MediaStream, stop: () => void) {
+  const ac = new AudioContext();
+  try {
+    await ac.audioWorklet.addModule(URL.createObjectURL(new Blob([VAD_WORKLET], { type: "application/javascript" })));
+    const node = new AudioWorkletNode(ac, "vad");
+    node.port.onmessage = (e) => {
+      if (e.data === "none") cancelled = true;
+      void ac.close();
       stop();
-    }
-  }, 100);
+    };
+    ac.createMediaStreamSource(stream).connect(node);
+    if (ac.state === "suspended") await ac.resume();
+  } catch {
+    void ac.close(); // no worklets: the MAX_MS limit still ends listening
+  }
 }
 
 function recordAndTranscribe() {
@@ -203,7 +208,7 @@ function recordAndTranscribe() {
         return finish("");
       }
       armWatchdog(MAX_MS);
-      watchSilence(s, () => stopNow?.());
+      void watchSilence(s, () => stopNow?.());
       rec = new MediaRecorder(s);
       rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
       rec.onstop = async () => {

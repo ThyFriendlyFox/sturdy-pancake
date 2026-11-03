@@ -41,6 +41,16 @@ Evidence: <commit / tag / gate run / screenshot>
 
 <!-- Entries below, newest first. -->
 
+## 2026-11-03 — Replaced SlimSAM with MediaPipe Magic Touch (0.5.0)
+
+The human asked why a tap-to-cut-out model is slow even on desktop, and whether the iPhone has this built in. It does (Vision, the "lift subject" feature), but only native apps can use it. The real problem was my model choice: SlimSAM is a general segment-anything model with a heavy image encoder, about 20 s per frame on this machine.
+
+MediaPipe's Interactive Segmenter ("Magic Touch") is made for tapping a thing in a web page. On the dog frame it took about 0.5 s on this machine's CPU, and the mask is cleaner. Software WebGL here made its GPU path slower than the CPU, so the app times the first GPU run and keeps the faster path. Following now samples 10 frames per second. The full end-to-end run went from 210 s to 72 s.
+
+The faster model exposed a voice bug: the silence detector ran on a timer, and a busy page made it miss pauses. It now runs on the audio thread. I did not measure memory on an iPhone; the model download fell from about 50 MB to 6 MB.
+
+Evidence: benchmark page (CPU runs 384–739 ms); `e2e/magic.cjs`, 0 errors, voice heard once; `npm run verify` green.
+
 ## 2026-11-03 — Tapping crashed the page on iPhone (0.4.1)
 
 The human's recording showed a tap on the cat, then a black and a white screen, then the page reloaded with a black video. That is iOS killing a page that uses too much memory. The likely cause is the cut-out model: on iPhone it ran on WebGPU with 32-bit weights, and tensors were not freed between frames.

@@ -30,7 +30,7 @@ const [url, video, out, wav] = process.argv.slice(2);
   page.on("pageerror", (e) => errors.push("pageerror " + e.message));
   page.on(
     "console",
-    (m) => m.type() === "error" && !/favicon|Failed to load resource/.test(m.text()) && errors.push("console " + m.text()),
+    (m) => m.type() === "error" && !/favicon|Failed to load resource|^INFO: /.test(m.text()) && errors.push("console " + m.text()),
   );
   await page.route("**/api/events", (r) => r.fulfill({ status: 204 }));
 

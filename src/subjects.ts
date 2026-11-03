@@ -4,14 +4,14 @@ import { useSyncExternalStore } from "react";
 import { defaultEffect, layout, uid, type EffectName, type SubjectLayer } from "./model";
 import { mediaUrl } from "./media";
 import { followTimes, maskStats, nearest, innerPoint, type MaskStats } from "./segment/maskmath";
-import type { SegmentRequest, SegmentResponse } from "./segment/worker";
+import { loadSegmenter, segment } from "./segment/magictouch";
 import { store } from "./store";
 import { makeVideo, primeFrame } from "./videoEl";
 import type { EventSource } from "./telemetry";
 
 const GRAB_SIDE = 512; // frames go to the model at this size (long side)
-export const FOLLOW_STEP = 0.4; // seconds between masks
-const MAX_GAP = 0.3; // draw effects only within this distance of a mask, so nothing sits misaligned
+export const FOLLOW_STEP = 0.1; // seconds between masks (Magic Touch is fast enough for 10 per second)
+const MAX_GAP = 0.08; // draw effects only within this distance of a mask, so nothing sits misaligned
 
 export interface Keyframe {
   t: number; // source seconds
@@ -80,7 +80,8 @@ export const isIPhone = () =>
 const crashes = () => Number(ls.get(CRASHES) ?? 0);
 /** Cut-outs are off after 2 crashes on this device. */
 export const cutoutsOff = () => crashes() >= 2;
-const lightMode = () => isIPhone() || crashes() >= 1;
+/** After a crash on this device, run the model on the CPU, which uses less memory than the GPU path. */
+const cpuOnly = () => crashes() >= 1;
 
 /** Call once at start. Returns a message to show when the last session crashed during a cut-out. */
 export function checkLastCrash(): string | null {
@@ -102,39 +103,21 @@ export function useModelProgress() {
     () => (modelReady ? 1 : modelProgress),
   );
 }
-let worker: Worker | null = null;
-let seq = 0;
-const pending = new Map<number, (r: SegmentResponse) => void>();
-function call(req: Omit<SegmentRequest, "id">, transfer: Transferable[] = []): Promise<SegmentResponse> {
-  worker ??= (() => {
-    const w = new Worker(new URL("./segment/worker.ts", import.meta.url), { type: "module" });
-    w.onmessage = (e: MessageEvent<SegmentResponse>) => {
-      if (e.data.id === 0) {
-        modelProgress = e.data.progress ?? 0;
-        return emit();
-      }
-      pending.get(e.data.id)?.(e.data);
-      pending.delete(e.data.id);
-    };
-    return w;
-  })();
-  const id = ++seq;
-  return new Promise((res) => {
-    pending.set(id, res);
-    worker!.postMessage({ id, ...req }, transfer);
-  });
-}
-
 /** Start downloading the model in the background, once the video is on screen and nothing else is busy. */
 let warming = false;
 export function warmup() {
-  if (warming) return;
+  if (warming || cutoutsOff()) return;
   warming = true;
-  if (cutoutsOff()) return;
-  void call({ type: "warmup", light: lightMode() }).then((r) => {
-    modelReady = r.ok;
+  void loadSegmenter(cpuOnly(), (p) => {
+    modelProgress = p;
     emit();
-  });
+  }).then(
+    () => {
+      modelReady = true;
+      emit();
+    },
+    () => (warming = false),
+  );
 }
 
 // ---------- frame grabs (separate elements, so playback is untouched) ----------
@@ -173,16 +156,19 @@ function grabImage(mediaId: string): Promise<HTMLCanvasElement> {
 }
 
 async function segmentFrame(frame: HTMLCanvasElement, point: [number, number]) {
-  const rgba = frame.getContext("2d", { willReadFrequently: true })!.getImageData(0, 0, frame.width, frame.height).data;
   ls.set(BUSY, String(Date.now()));
-  const r = await call({ type: "segment", rgba, width: frame.width, height: frame.height, point, light: lightMode() }, [rgba.buffer]);
+  if (!modelReady)
+    await loadSegmenter(cpuOnly(), (p) => {
+      modelProgress = p;
+      emit();
+    });
+  const r = await segment(frame, point, cpuOnly());
   ls.set(BUSY, null);
-  if (!r.ok || !r.mask) throw new Error(r.error ?? "Segmentation failed");
   if (!modelReady) {
     modelReady = true;
     emit();
   }
-  return r;
+  return { ...r, device: r.delegate };
 }
 
 function maskCanvas(mask: Uint8Array, w: number, h: number) {
@@ -251,8 +237,9 @@ async function follow(id: string, mediaId: string, a: number, b: number, t0: num
     for (const t of dir) {
       if (!tracks.has(id)) return; // removed
       // Playback and following both decode video; let playback win, and give the page a breath between masks.
-      while (store.get().playing) await new Promise((r) => setTimeout(r, 400));
-      await new Promise((r) => setTimeout(r, 60));
+      // Also wait while listening: the model shares the page with the silence detector.
+      while (store.get().playing || store.get().listening) await new Promise((r) => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 16));
       try {
         const frame = await grab(mediaId, t);
         const r = await segmentFrame(frame, point);

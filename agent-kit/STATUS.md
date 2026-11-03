@@ -12,8 +12,8 @@ behavior change. The weekly cycle (WEEKLY.md step 5) refreshes it.
 | Video-first screen, tap menu, 3-screen swipe | ✅ | `e2e/magic.cjs`, 0 errors: empty-screen tap shows Add clips; swipes move 1 screen each (−780, −780, −390, 0, 0); forced scroll stays 0. Not checked on a real iPhone |
 | iPhone memory during cut-outs | 🚧 | Light mode (WASM, 8-bit weights) on iPhone, tensors freed per frame, crash guard tested by simulation (1 crash → light mode, 2 → off). The human's recording showed a crash on tap; not re-checked on a real iPhone |
 | iPhone video drawing | 🚧 | Hidden videos are now in the page, muted, playsinline and primed with play-then-pause. Fixes the black video in the human's recording in theory; needs a real-iPhone check |
-| Tap to isolate (SlimSAM, in the browser) | ✅ | Same run: dog isolated 33 s after the tap, model download included (CPU, no GPU) |
-| Follow through the clip | 🚧 | Works: 3.5 s clip followed in 150 s on a 2-core CPU without WebGPU. Too slow without WebGPU; not timed on a phone |
+| Tap to isolate (MediaPipe Magic Touch) | ✅ | ~0.5 s per frame on this CPU-only machine (SlimSAM: ~20 s). Full test 72 s, was 210 s. Not timed on a phone |
+| Follow through the clip | ✅ | 10 masks per second; 3.5 s clip followed in ~30 s on this CPU-only machine (was ~150 s at 2.5 per second) |
 | Subject effects (glow, spotlight, trail, freeze, clone, recolor, erase, sticker, follow cam) | ✅ | Glow and spotlight on the followed dog at 3.1 s mid-playback (screenshot in devlog). The others render in code; not each screenshotted |
 | Floating component cards, AI badge | ✅ | Fake-AI run: apply_look + show_components raised the Color card with "AI set this" |
 | Tracks screen, open a track in place | ✅ | Screenshots: 7 lanes; Dog lane opens the Subject component |
@@ -32,5 +32,5 @@ States: ✅ done (gated) · 🚧 in progress · ❌ not started · 🧊 frozen/w
 ## Current week
 
 - **Shipping:** between cycles — next is ROADMAP item 1, browser end-to-end gate
-- **Last release:** 0.4.1 (untagged) — 2026-11-03, live at https://cutkit-amber.vercel.app
+- **Last release:** 0.5.0 (untagged) — 2026-11-03, live at https://cutkit-amber.vercel.app
 - **Known red:** none. GitHub's default branch is still `claude/cutkit`; the human switches it to `main`.

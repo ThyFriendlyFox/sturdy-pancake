@@ -7,7 +7,7 @@ CutKit reads user settings from the browser's localStorage. The user changes the
 | localStorage (per browser) | AI settings, project, edit-data switch, anonymous user id |
 | IndexedDB `ck-media` (per browser) | Imported and recorded media files |
 | IndexedDB `ck-masks` (per browser) | Subject masks and still cut-outs, per subject layer |
-| Browser cache | SlimSAM weights (`Xenova/slimsam-77-uniform`) from Hugging Face |
+| Browser cache | Magic Touch model (6 MB) from storage.googleapis.com; Whisper tiny from Hugging Face, only when the browser has no speech recognition |
 | Vercel env | `BLOB_READ_WRITE_TOKEN` |
 
 At first start, no AI is connected and the project is empty. A damaged localStorage value is ignored and the default is used. A missing media file leaves its clip blank; nothing crashes.
@@ -34,11 +34,12 @@ At first start, no AI is connected and the project is empty. A damaged localStor
 | Max edit-data request | `api/events.ts` | 256 KB, 500 events |
 | Undo depth | `src/store.ts` | 100 |
 | Export bitrate | `src/engine.ts` | 8 Mbit/s, 30 fps |
-| Segmentation model | `src/segment/worker.ts` `MODEL` | `Xenova/slimsam-77-uniform`; WebGPU fp32 if an adapter exists, else WASM q8. iPhone, or after 1 crash: always WASM q8. After 2 crashes: off |
+| Segmentation model | `src/segment/magictouch.ts` `MODEL_URL` | MediaPipe Interactive Segmenter, Magic Touch float32. GPU (WebGL) first; if the first GPU run takes over 150 ms, the CPU is timed too and the faster one kept. After 1 crash: CPU only. After 2 crashes: off |
+| MediaPipe runtime | `public/mediapipe/` | copied from `node_modules/@mediapipe/tasks-vision/wasm` by `scripts/copy-mediapipe.mjs` before every build; not in git |
 | `ck.segBusy`, `ck.segCrashes` | localStorage | set during a model run; crash count on this device |
 | Frame size sent to the model | `src/subjects.ts` `GRAB_SIDE` | 512 px long side |
-| Follow step | `src/subjects.ts` `FOLLOW_STEP` | 0.4 s |
-| Mask reach | `src/subjects.ts` `MAX_GAP` | 0.3 s; no mask closer than this means no effect drawn |
+| Follow step | `src/subjects.ts` `FOLLOW_STEP` | 0.1 s |
+| Mask reach | `src/subjects.ts` `MAX_GAP` | 0.08 s; no mask closer than this means no effect drawn |
 | Media save piece size | `src/media.ts` `CHUNK` | 4 MB |
 | Model download delay | `src/ui/VideoScreen.tsx` | 5 s after the first clip is on screen |
 | Playback draw cap | `src/engine.ts` `tick()` | 30 fps; paused draws only after a change |

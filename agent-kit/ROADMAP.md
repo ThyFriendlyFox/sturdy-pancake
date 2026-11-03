@@ -62,6 +62,7 @@ provisional: true — the agent seeded this order at install time. The human re-
 
 | Week | Feature | Release | Evidence |
 |---|---|---|---|
+| 2026-11-03 | Fast cut-outs with MediaPipe Magic Touch | 0.5.0 | ~0.5 s per frame vs ~20 s (SlimSAM) on CPU; full `e2e/magic.cjs` 72 s vs 210 s, 0 errors |
 | 2026-11-03 | iPhone memory crash on tap | 0.4.1 | Simulated crashes: message, light mode, then cut-outs off; `e2e/magic.cjs` 0 errors |
 | 2026-11-03 | iPhone fixes and tap-to-talk; corner paw removed | 0.4.0 | `e2e/magic.cjs`, 0 errors: tap listens, voice reaches the AI with the subject; swipes 1 screen each; forced scroll stays 0. Real iPhone not checked |
 | 2026-11-03 | Hold-to-talk fix, voice fallback, no home-screen app mode | 0.3.3 | Fake-mic test: "Make the video look warmer." in 6.3 s; strip stayed at the video (`scrollLeft=0`) |
@@ -90,3 +91,4 @@ provisional: true — the agent seeded this order at install time. The human re-
 - 2026-11-03 — Inserted "Load progress and speed" at position 1. The human reported no visible progress while a video loads, and a slow app.
 - 2026-11-03 — Inserted "iPhone fixes and tap-to-talk" at position 1 from the human's iPhone screen recording.
 - 2026-11-03 — Shipped "iPhone memory crash on tap" out of queue: the human's recording showed the page crash and reload on tap.
+- 2026-11-03 — Shipped "Fast cut-outs with MediaPipe Magic Touch" out of queue: the human found cut-outs slow on desktop and crashing on iPhone.

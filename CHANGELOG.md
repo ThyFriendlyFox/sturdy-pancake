@@ -5,6 +5,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-03
+### Changed
+- Cut-outs use Google's MediaPipe Magic Touch, a 6 MB model made for tap-to-select. On a CPU-only test machine one frame takes about 0.5 s instead of 20 s. It uses the phone's GPU when that is faster.
+- Following a tapped thing samples 10 frames per second instead of 2.5, so effects stay on it more closely.
+- The download for cut-outs is 6 MB instead of about 50 MB.
+
+### Fixed
+- Voice: the end of speech is detected on the audio thread, so a busy page no longer makes it miss a pause.
+
 ## [0.4.1] - 2026-11-03
 ### Fixed
 - Tapping the video on iPhone could crash and reload the page: cutting a thing out used too much memory. iPhone now uses a lighter model setup, and each frame's working memory is freed at once.

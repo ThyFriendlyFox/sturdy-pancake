@@ -4,3 +4,4 @@ package-lock.json
 *.md
 agent-kit
 .claude
+public/mediapipe
