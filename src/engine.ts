@@ -15,8 +15,6 @@ import { mediaUrl } from "./media";
 import { PITCH_WORKLET } from "./pitch";
 import { makeVideo, primeFrame, removeVideo } from "./videoEl";
 import { store } from "./store";
-import { keyframeAt, onSubjectsChange, stillOf } from "./subjects";
-import type { SubjectLayer } from "./model";
 
 type El = HTMLVideoElement | HTMLAudioElement;
 
@@ -58,6 +56,7 @@ export class Engine {
   /** Bumped on every drawn frame; mirrors copy only when it changes. */
   frame = 0;
   private dirty = true;
+  private drewOnce = false;
   private lastDraw = 0;
   /** Ask for a redraw while paused (project edits, seeks, new masks, a decoded frame). */
   invalidate = () => {
@@ -68,7 +67,6 @@ export class Engine {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
     store.subscribe(this.invalidate);
-    onSubjectsChange(this.invalidate);
     document.fonts?.ready.then(this.invalidate);
     const loop = (now: number) => {
       this.tick(now);
@@ -325,7 +323,7 @@ export class Engine {
     return null;
   }
 
-  /** Where a clip's source lands on the canvas. Subject masks are drawn into the same rect. */
+  /** Where a clip's source lands on the canvas. */
   private rectFor(c: Clip, src: CanvasImageSource, dx = 0, dy = 0, scale = 1) {
     const W = this.canvas.width,
       H = this.canvas.height;
@@ -349,250 +347,6 @@ export class Engine {
     ctx.filter = filterCss(c.filters);
     ctx.drawImage(src, r.x, r.y, r.w, r.h);
     ctx.restore();
-  }
-
-  /** Canvas point (0..1) → the clip under the playhead and the same point in its source frame (0..1). */
-  toSource(t: number, x: number, y: number) {
-    const pl = clipAt(this.project, t);
-    if (!pl) return null;
-    const src = this.sourceFor(pl.clip);
-    const r = src && this.rectFor(pl.clip, src);
-    if (!r) return null;
-    const sx = (x * this.canvas.width - r.x) / r.w,
-      sy = (y * this.canvas.height - r.y) / r.h;
-    if (sx < 0 || sx > 1 || sy < 0 || sy > 1) return null;
-    return { clipId: pl.clip.id, sourceT: sourceTime(pl, t), point: [sx, sy] as [number, number] };
-  }
-
-  /** Source point (0..1) of a clip → canvas point (0..1), ignoring camera moves. */
-  toCanvas(clipId: string, sx: number, sy: number) {
-    const c = this.project.clips.find((x) => x.id === clipId);
-    const src = c && this.sourceFor(c);
-    const r = c && src && this.rectFor(c, src);
-    if (!r) return null;
-    return { x: (r.x + sx * r.w) / this.canvas.width, y: (r.y + sy * r.h) / this.canvas.height };
-  }
-
-  // ---------- subject layers ----------
-  private cut = document.createElement("canvas");
-  private tmp = document.createElement("canvas");
-  private trails = new Map<string, { t: number; frames: HTMLCanvasElement[] }>();
-  private stickers = new Map<string, HTMLCanvasElement>();
-  private followCam = { x: 0, y: 0, z: 1 };
-  private drewOnce = false;
-
-  private fit(c: HTMLCanvasElement) {
-    if (c.width !== this.canvas.width || c.height !== this.canvas.height) {
-      c.width = this.canvas.width;
-      c.height = this.canvas.height;
-    }
-    const x = c.getContext("2d")!;
-    x.setTransform(1, 0, 0, 1, 0, 0);
-    x.globalCompositeOperation = "source-over";
-    x.filter = "none";
-    x.globalAlpha = 1;
-    x.clearRect(0, 0, c.width, c.height);
-    return x;
-  }
-
-  /** Follow camera: zoom in and keep the followed subject centered (smoothed). */
-  private followOffset(p: Project, t: number, W: number, H: number) {
-    const pl = clipAt(p, t);
-    const target = { x: 0, y: 0, z: 1 };
-    const s = pl && p.subjects.find((x) => x.clipId === pl.clip.id && x.effects.follow);
-    if (pl && s) {
-      const kf = keyframeAt(s.id, sourceTime(pl, t));
-      const src = this.sourceFor(pl.clip);
-      const z = s.effects.follow!.zoom;
-      const r = src && this.rectFor(pl.clip, src, 0, 0, z);
-      if (kf && r) {
-        target.z = z;
-        target.x = Math.max(-(r.w - W) / 2, Math.min((r.w - W) / 2, (0.5 - kf.stats.cx) * r.w));
-        target.y = Math.max(-(r.h - H) / 2, Math.min((r.h - H) / 2, (0.5 - kf.stats.cy) * r.h));
-      }
-    }
-    const k = this.playing ? 0.12 : 1;
-    this.followCam.x += (target.x - this.followCam.x) * k;
-    this.followCam.y += (target.y - this.followCam.y) * k;
-    this.followCam.z += (target.z - this.followCam.z) * k;
-    return this.followCam;
-  }
-
-  private drawSubjects(p: Project, t: number, camX: number, camY: number, camScale: number) {
-    const pl = clipAt(p, t);
-    if (!pl) return;
-    const layers = p.subjects.filter((s) => s.clipId === pl.clip.id && Object.keys(s.effects).length);
-    if (!layers.length) return;
-    const src = this.sourceFor(pl.clip);
-    const r = src && this.rectFor(pl.clip, src, camX, camY, camScale);
-    if (!src || !r) return;
-    const st = sourceTime(pl, t);
-    for (const s of layers) {
-      const kf = keyframeAt(s.id, st);
-      if (!kf && !s.effects.freeze && !s.effects.sticker) continue;
-      this.drawSubject(s, kf?.mask ?? null, src, r, pl.clip, t);
-    }
-  }
-
-  private drawSubject(
-    s: SubjectLayer,
-    mask: HTMLCanvasElement | null,
-    src: CanvasImageSource,
-    r: { x: number; y: number; w: number; h: number },
-    clip: Clip,
-    t: number,
-  ) {
-    const { ctx, canvas } = this;
-    const W = canvas.width,
-      H = canvas.height;
-    const fx = s.effects;
-    if (mask) this.drawMasked(s, mask, src, r, clip, t);
-    const still = fx.freeze || fx.sticker ? stillOf(s.id) : null;
-    if (fx.freeze && still) ctx.drawImage(still, r.x, r.y, r.w, r.h);
-    if (fx.sticker && still) {
-      const st = this.stickerFor(s.id, still);
-      const k = (fx.sticker.scale * H) / st.height;
-      ctx.save();
-      ctx.translate(fx.sticker.x * W, fx.sticker.y * H);
-      ctx.rotate((fx.sticker.rotate * Math.PI) / 180);
-      ctx.drawImage(st, (-st.width * k) / 2, (-st.height * k) / 2, st.width * k, st.height * k);
-      ctx.restore();
-    }
-  }
-
-  /** Effects that follow the live subject: they need this frame's mask. */
-  private drawMasked(
-    s: SubjectLayer,
-    mask: HTMLCanvasElement,
-    src: CanvasImageSource,
-    r: { x: number; y: number; w: number; h: number },
-    clip: Clip,
-    t: number,
-  ) {
-    const { ctx, canvas } = this;
-    const W = canvas.width,
-      H = canvas.height;
-    const fx = s.effects;
-    // Cut-out of the subject in canvas space.
-    const cx = this.fit(this.cut);
-    cx.filter = filterCss(clip.filters);
-    cx.drawImage(src, r.x, r.y, r.w, r.h);
-    // The mask comes from a ~512 px frame; a small blur hides the stair-steps when it is scaled up.
-    cx.filter = `blur(${Math.max(1, r.w / mask.width / 1.5).toFixed(1)}px)`;
-    cx.globalCompositeOperation = "destination-in";
-    cx.drawImage(mask, r.x, r.y, r.w, r.h);
-    cx.filter = "none";
-
-    if (fx.erase) {
-      const tx = this.fit(this.tmp);
-      tx.filter = `blur(${fx.erase.blur}px)`;
-      tx.drawImage(src, r.x - 40, r.y, r.w + 80, r.h);
-      tx.filter = "blur(10px)";
-      tx.globalCompositeOperation = "destination-in";
-      for (const [ox, oy] of [
-        [0, 0],
-        [8, 0],
-        [-8, 0],
-        [0, 8],
-        [0, -8],
-      ])
-        tx.drawImage(mask, r.x + ox, r.y + oy, r.w, r.h);
-      ctx.drawImage(this.tmp, 0, 0);
-    }
-    if (fx.spotlight) {
-      ctx.save();
-      ctx.fillStyle = `rgba(0,0,0,${fx.spotlight.dim})`;
-      ctx.fillRect(0, 0, W, H);
-      ctx.restore();
-      if (!fx.erase) ctx.drawImage(this.cut, 0, 0);
-    }
-    if (fx.recolor && !fx.erase) {
-      ctx.save();
-      ctx.filter = `hue-rotate(${fx.recolor.hue}deg) saturate(1.4)`;
-      ctx.drawImage(this.cut, 0, 0);
-      ctx.restore();
-    }
-    if (fx.trail) {
-      let tr = this.trails.get(s.id);
-      if (!tr || Math.abs(t - tr.t) > 0.4 || t < tr.t) tr = { t, frames: [] };
-      if (this.playing && t - tr.t >= 0.06) {
-        const c = document.createElement("canvas");
-        c.width = W / 2;
-        c.height = H / 2;
-        c.getContext("2d")!.drawImage(this.cut, 0, 0, W / 2, H / 2);
-        tr.frames.push(c);
-        if (tr.frames.length > fx.trail.length) tr.frames.shift();
-        tr.t = t;
-      } else if (!this.playing) tr.t = t;
-      this.trails.set(s.id, tr);
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-      tr.frames.forEach((c, i) => {
-        ctx.globalAlpha = ((i + 1) / (tr!.frames.length + 1)) * 0.55;
-        ctx.filter = `grayscale(1) brightness(1.4) drop-shadow(0 0 8px ${fx.trail!.color})`;
-        ctx.drawImage(c, 0, 0, W, H);
-      });
-      ctx.restore();
-    }
-    if (fx.clone) {
-      const { dx, dy, scale } = fx.clone;
-      ctx.save();
-      ctx.translate(W / 2 + dx * W, H / 2 + dy * H);
-      ctx.scale(scale, scale);
-      ctx.drawImage(this.cut, -W / 2, -H / 2);
-      ctx.restore();
-    }
-    if (fx.glow) {
-      const breathe = 1 - fx.glow.breathing * 0.5 * (1 + Math.sin(t * Math.PI * 1.4));
-      const blur = 6 + 34 * fx.glow.strength * breathe;
-      ctx.save();
-      ctx.shadowColor = fx.glow.color;
-      ctx.shadowBlur = blur;
-      ctx.drawImage(this.cut, 0, 0);
-      ctx.shadowBlur = blur * 0.45;
-      ctx.drawImage(this.cut, 0, 0);
-      ctx.shadowColor = "rgba(255,255,255,0.9)";
-      ctx.shadowBlur = 3;
-      ctx.drawImage(this.cut, 0, 0);
-      ctx.restore();
-    }
-  }
-
-  /** Frozen cut-out cropped to its edges, with a white sticker border. */
-  private stickerFor(id: string, still: HTMLCanvasElement) {
-    const hit = this.stickers.get(id);
-    if (hit) return hit;
-    const d = still.getContext("2d")!.getImageData(0, 0, still.width, still.height).data;
-    let x0 = still.width,
-      y0 = still.height,
-      x1 = 0,
-      y1 = 0;
-    for (let y = 0; y < still.height; y++)
-      for (let x = 0; x < still.width; x++)
-        if (d[(y * still.width + x) * 4 + 3] > 20) {
-          x0 = Math.min(x0, x);
-          x1 = Math.max(x1, x);
-          y0 = Math.min(y0, y);
-          y1 = Math.max(y1, y);
-        }
-    const pad = 10;
-    const c = document.createElement("canvas");
-    c.width = Math.max(1, x1 - x0 + pad * 2);
-    c.height = Math.max(1, y1 - y0 + pad * 2);
-    const x = c.getContext("2d")!;
-    // White edge: the silhouette drawn white in a ring, then the cut-out on top.
-    const sil = document.createElement("canvas");
-    sil.width = c.width;
-    sil.height = c.height;
-    const sx = sil.getContext("2d")!;
-    sx.drawImage(still, x0 - pad, y0 - pad, c.width, c.height, 0, 0, c.width, c.height);
-    sx.globalCompositeOperation = "source-in";
-    sx.fillStyle = "#fff";
-    sx.fillRect(0, 0, c.width, c.height);
-    for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) x.drawImage(sil, Math.cos(a) * 6, Math.sin(a) * 6);
-    x.drawImage(still, x0 - pad, y0 - pad, c.width, c.height, 0, 0, c.width, c.height);
-    this.stickers.set(id, c);
-    return c;
   }
 
   draw(t: number) {
@@ -625,20 +379,13 @@ export class Engine {
       }
     }
 
-    const fc = this.followOffset(p, t, W, H);
-    camX += fc.x;
-    camY += fc.y;
-    camScale *= fc.z;
-
     const pl = clipAt(p, t);
-    let inTransition = false;
     if (pl) {
       const c = pl.clip;
       const tr = c.transition;
       const prev = pl.index > 0 ? p.clips[pl.index - 1] : null;
       const k = tr.duration > 0 ? (t - pl.start) / tr.duration : 1;
       if (prev && tr.type !== "none" && k < 1) {
-        inTransition = true;
         const e = ease(k);
         switch (tr.type) {
           case "fade":
@@ -673,7 +420,6 @@ export class Engine {
         }
       } else this.drawClip(c, 1, camX, camY, camScale);
     }
-    if (!inTransition) this.drawSubjects(p, t, camX, camY, camScale);
 
     for (const m of p.motions) if (t >= m.start && t < m.end) this.drawMotion(m, t, W, H, totalDuration(p));
     for (const x of p.texts) if (t >= x.start && t < x.end) this.drawText(x, t, W, H);

@@ -5,6 +5,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-04
+### Changed
+- Tapping the video opens a menu of everyday edits: Trim, Text, Music, Look, Effects, Export, Add clips and Voice. The app still listens on the same tap.
+
+### Removed
+- Masking: tapping a thing to cut it out, following it through the clip, and the 9 effects built on it. Saved masks are deleted from the device on the next visit.
+
 ## [0.5.0] - 2026-11-03
 ### Changed
 - Cut-outs use Google's MediaPipe Magic Touch, a 6 MB model made for tap-to-select. On a CPU-only test machine one frame takes about 0.5 s instead of 20 s. It uses the phone's GPU when that is faster.

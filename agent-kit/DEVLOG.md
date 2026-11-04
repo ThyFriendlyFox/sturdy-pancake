@@ -41,6 +41,14 @@ Evidence: <commit / tag / gate run / screenshot>
 
 <!-- Entries below, newest first. -->
 
+## 2026-11-04 — Removed masking (0.6.0)
+
+The human said the faster cut-outs were better, but asked to drop masking for now. All they wanted was an easy subject mask for edits. Two models and 3 releases did not get there: the first was slow and crashed the iPhone page, the second was faster but still not easy.
+
+I removed subjects, the cut-out model, following, the 9 effects, the subject lanes and the AI's subject tools. Tapping the video now opens a menu of everyday edits that raise their component cards, and it still listens. Old projects drop their subject layers when they load, and the app deletes saved masks from the device once.
+
+Evidence: `e2e/magic.cjs`, 0 errors; menu screenshots; `npm run verify` green, 5 tests.
+
 ## 2026-11-03 — Replaced SlimSAM with MediaPipe Magic Touch (0.5.0)
 
 The human asked why a tap-to-cut-out model is slow even on desktop, and whether the iPhone has this built in. It does (Vision, the "lift subject" feature), but only native apps can use it. The real problem was my model choice: SlimSAM is a general segment-anything model with a heavy image encoder, about 20 s per frame on this machine.

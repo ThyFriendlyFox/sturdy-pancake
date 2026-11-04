@@ -6,8 +6,7 @@
 2. Build — `npm run build`
 3. Tests — `npm test` (Vitest: timeline math in `src/model.test.ts`)
 4. Browser end-to-end — **not yet a gate.** `e2e/magic.cjs` runs the
-   whole UI in a 390×844 viewport with a fake AI and real in-browser
-   segmentation. It runs by hand; ROADMAP item 1 puts it in CI.
+   whole UI in a 390×844 viewport with a fake AI and a fake microphone. It runs by hand; ROADMAP item 1 puts it in CI.
 
 ## Rules
 

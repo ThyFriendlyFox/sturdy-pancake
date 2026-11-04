@@ -1,6 +1,6 @@
 # Architecture
 
-CutKit is a single-page web app (React + TypeScript, built with Vite) that edits video in a phone browser. A chat AI drives the edits through components. One Vercel function stores edit data. The code has 10 parts.
+CutKit is a single-page web app (React + TypeScript, built with Vite) that edits video in a phone browser. A chat AI drives the edits through components. One Vercel function stores edit data. The code has 9 parts.
 
 | Part | Folder | Task |
 |---|---|---|
@@ -11,7 +11,6 @@ CutKit is a single-page web app (React + TypeScript, built with Vite) that edits
 | Components | `src/components/` | Editing units: a Panel plus AI tools each. |
 | AI | `src/ai/` | Provider settings, OpenRouter sign-in, system prompt, tool loop. |
 | UI shell | `src/App.tsx`, `src/ui/`, `src/styles.css` | 3 screens (Tracks, Video, Talk): swiped on a phone, side by side at ≥1000 px; paw menus, floating component card, sheets. Motion animations. |
-| Subjects | `src/subjects.ts`, `src/segment/` | Tap → cut-out (MediaPipe Magic Touch) → follow through the clip. Masks on the device. |
 | Voice and examples | `src/voice.ts`, `src/speech/`, `src/examples.ts`, `src/beats.ts` | Tap-to-talk that stops on silence: the browser's speech recognition, else recording plus Whisper in a worker; example video analysis (shots, tempo, contact sheet). |
 | Edit data | `src/telemetry.ts`, `api/events.ts` | Batches edit events in the browser; the function writes them to Vercel Blob. |
 
@@ -19,7 +18,7 @@ CutKit is a single-page web app (React + TypeScript, built with Vite) that edits
 
 One chat request, from typed words to a changed video:
 
-1. The user taps the video, which opens the paw menu and starts listening (`src/voice.ts`), or types on the talk screen. `session.ask()` calls `Agent.send()`, adding the tapped subject if there is one.
+1. The user taps the video, which opens the paw menu and starts listening (`src/voice.ts`), or types on the talk screen. `session.ask()` calls `Agent.send()`.
 2. `Agent` adds `<editor_state>` (from `store.snapshot()`) to the message and sends it with every tool in `ALL_TOOLS` to the provider.
 3. The model answers with tool calls. `runTool()` finds each tool and calls its `run()`.
 4. The tool calls an op that calls `store.edit(component, tool, "ai", args, fn)`. The store pushes undo history, saves to localStorage and logs an `edit` event.
@@ -27,15 +26,6 @@ One chat request, from typed words to a changed video:
 6. Tool results go back to the model. The loop repeats until the model stops calling tools (max 14 steps).
 7. Each animation frame, `Engine.tick()` reads the project, syncs media elements and draws the frame on the canvas.
 8. `telemetry` sends queued events to `/api/events` every 15 s and when the page hides.
-
-## Tap to isolate
-
-1. `VideoScreen` maps the tap to a canvas point, then `Engine.toSource()` maps it to the clip's source frame.
-2. `isolate()` grabs that frame from a hidden video element at 512 px and passes it to `segment/magictouch.ts`.
-3. MediaPipe's Interactive Segmenter (GPU through WebGL, or CPU) returns the tapped category; the largest region of it is the mask.
-4. A `SubjectLayer` goes into the project through `store.edit`; masks stay in `subjects.ts` and IndexedDB `ck-masks`.
-5. `follow()` segments every 0.1 s forward and back, prompting each frame with the last mask's center.
-6. `Engine.drawSubjects()` draws effects from the nearest mask within 0.08 s.
 
 ## Engine
 
@@ -56,7 +46,6 @@ One chat request, from typed words to a changed video:
 | `audio.tsx` | voice, pitch, music |
 | `overlays.tsx` | text, motion |
 | `output.tsx` | format, export |
-| `subject.tsx` | subject (tapped things and their effects) |
 | `examples.tsx` | examples (analyze an example video, propose a recipe) |
 | `index.ts` | Registry plus core tools: show/hide components, get_state, undo, view_frame |
 
@@ -66,9 +55,7 @@ One chat request, from typed words to a changed video:
 |---|---|
 | UI ↔ Store | Project changes go only through `store.edit()`. |
 | Component ↔ AI | The AI acts only through tools. A tool and its Panel share one op function. |
-| UI ↔ Engine | The UI calls `getEngine()` methods. Only the engine plays, pauses or seeks preview media. `subjects.ts`, `thumbs.ts` and `examples.ts` use their own hidden elements. |
-| Project ↔ masks | The project holds subject layers and effects only. Masks never enter the project or edit data. |
-| Browser ↔ model host | The browser downloads the Magic Touch model from Google once. Frames never leave the device. |
+| UI ↔ Engine | The UI calls `getEngine()` methods. Only the engine plays, pauses or seeks preview media. `thumbs.ts` and `examples.ts` use their own hidden elements. |
 | Model ↔ everything | `model.ts` takes plain data and returns plain data. |
 | Browser ↔ AI provider | Direct HTTPS with the user's key. Nothing goes through `/api`. |
 | Browser ↔ `/api/events` | Edit events only: tools, arguments, project JSON, chat text. Never media, never keys. |

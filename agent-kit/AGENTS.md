@@ -41,17 +41,10 @@ Requires Node.js 20 or newer.
    `telemetry.log()`, which checks `telemetry.enabled`.
 9. **AI history never ends on an unanswered tool call.** `Agent.send()`
    rolls back the failed turn (`src/ai/agent.ts`).
-10. **Masks stay out of the project.** A subject layer holds its tap point
-   and effects; masks live in `src/subjects.ts` and IndexedDB `ck-masks`.
-   Edit data never carries frames or masks.
-11. **Cut-outs run in short steps.** MediaPipe runs on the page (WebGL or
-   CPU), one frame per call. Following yields between frames and pauses
-   while the video plays or the app listens. Never batch many frames into
-   one call.
-12. **The engine draws only when something changed while paused.** A
+10. **The engine draws only when something changed while paused.** A
    change to the picture must reach the engine: through the store, a media
    element event, or `engine.invalidate()`.
-13. **Every hidden video comes from `src/videoEl.ts`.** In the page, muted,
+11. **Every hidden video comes from `src/videoEl.ts`.** In the page, muted,
    playsinline, primed with play-then-pause. iPhone loads and draws nothing
    else.
 
@@ -71,14 +64,11 @@ Requires Node.js 20 or newer.
 | `backdrop-filter` over the video | It re-blurs on every video frame. Use solid translucent fills on overlays. |
 | Media save | Files save in 4 MB pieces after the clip shows. A half-saved file has no `id` record, so it is never read back as whole. |
 | Swipes | `src/ui/Pager.tsx` handles pointer events directly and counts a cancelled pointer by its last position. Motion's drag dropped swipes on a busy page, and browsers cancel pointers for text selection and scrolling. |
-| Memory on iPhone | iOS kills a page that uses too much memory and reloads it. The model runs in light mode on iPhone, frees tensors per frame, and `ck.segBusy` detects a crash on the next load. Test new heavy work against this. |
 | Mic on iPhone | Start listening inside the tap handler, before any `await`. iPhone allows the microphone only from the tap. |
 | Editing tests with Python string replace | Prettier reflows lines, so a replace can silently match nothing. Assert the old text is present. |
 | `scrollIntoView` | It scrolls every ancestor, including the 3-screen strip, which then slides to another screen. Scroll the list element itself. |
 | Overlays over the video | A fading overlay still takes taps. The paw scrim has no exit animation for this reason. |
-| WebGPU | `navigator.gpu` can exist with no adapter. `worker.ts` asks for an adapter before choosing WebGPU. |
 | Playback clock | The playing video drives `Engine.t`. Seeking a playing video to "catch up" shows black frames on slow decoders. |
-| Mask timing | Effects draw only within `MAX_GAP` of a mask. Raising `FOLLOW_STEP` without raising it leaves gaps. |
 | Zero-size anchors | `.radial` is 0×0; Playwright needs `state: "attached"` to wait for it. |
 | `motion` transforms | Motion owns `transform` on animated elements. Center them with the `translate` property, not `transform`. |
 | Production deploy | The Vercel project is git-linked, but production builds come from an explicit deployment of the release branch. See `RELEASING.md`. |

@@ -1,27 +1,19 @@
 import { motion } from "motion/react";
 import { session } from "../ai/session";
-import { defaultEffect, newClip, type EffectName } from "../model";
+import { newClip } from "../model";
 import { pickFiles } from "../media";
 import { store, useStore } from "../store";
-import { setEffect } from "../subjects";
 import { cancelListening, isListening, startListening, stopListening, voiceSupported } from "../voice";
-import { EFFECT_LABEL } from "../components/subject";
 import { Icon } from "./icons";
 import { spring } from "./Sheet";
 
-/** Isolation started by the current tap, so speech can wait for it and name the tapped thing. */
-let pendingSubject: Promise<string | null> = Promise.resolve(null);
-export const setPendingSubject = (p: Promise<string | null>) => (pendingSubject = p);
-
 /**
- * Start listening (tap-to-talk). Listening ends by itself after a pause; the words go to the AI, together
- * with the thing the user tapped once it is cut out. Returns false when there is no AI or no microphone.
+ * Start listening (tap-to-talk). Listening ends by itself after a pause and the words go to the AI.
+ * Returns false when there is no AI or no microphone.
  */
 export function listen(): boolean {
   if (!session.connected || !voiceSupported() || isListening()) return false;
-  return startListening(async (text) => {
-    const id = await pendingSubject;
-    if (id) store.set({ selectedSubjectId: id });
+  return startListening((text) => {
     store.set({ radial: null });
     void session.ask(text);
   });
@@ -59,6 +51,16 @@ const close = () => {
   cancelListening();
   store.set({ radial: null });
 };
+/** A toe that raises a component card. */
+const card = (id: string, label: string, icon: string): Toe => ({
+  id,
+  label,
+  icon,
+  run: () => {
+    close();
+    store.show([id], "user");
+  },
+});
 
 const START: Toe[] = [
   { id: "add", label: "Add clips", icon: "plus", run: () => (close(), addClips()) },
@@ -76,32 +78,16 @@ const START: Toe[] = [
   { id: "copy", label: "Copy an edit", icon: "clone", run: () => (close(), store.set({ page: 2 })) },
 ];
 
-const EFFECTS: { effect: EffectName; icon: string }[] = [
-  { effect: "follow", icon: "follow" },
-  { effect: "glow", icon: "glow" },
-  { effect: "spotlight", icon: "spotlight" },
-  { effect: "freeze", icon: "freeze" },
-  { effect: "clone", icon: "clone" },
-  { effect: "recolor", icon: "recolor" },
-  { effect: "erase", icon: "erase" },
-  { effect: "sticker", icon: "sticker" },
+const EDIT: Toe[] = [
+  card("cuts", "Trim", "scissors"),
+  card("text", "Text", "text"),
+  card("music", "Music", "music"),
+  card("color", "Look", "look"),
+  card("motion", "Effects", "motion"),
+  card("export", "Export", "export"),
+  { id: "add", label: "Add clips", icon: "plus", run: () => (close(), addClips()) },
+  card("voice", "Voice", "voice"),
 ];
-
-function effectToes(subjectId: string | null): Toe[] {
-  return EFFECTS.map((e) => ({
-    id: e.effect,
-    label: EFFECT_LABEL[e.effect],
-    icon: e.icon,
-    run: () => {
-      const s = store.get().project.subjects.find((x) => x.id === subjectId);
-      close();
-      if (!s) return;
-      setEffect(s.id, e.effect, defaultEffect(e.effect, s.t0) as Record<string, unknown>, "user");
-      store.show(["subject"], "user");
-      store.toast(`${EFFECT_LABEL[e.effect]} added`, true);
-    },
-  }));
-}
 
 /** Paw menu around a tap. It listens as soon as it opens; the pad in the middle stops or restarts listening. */
 export function RadialPaw({ width, height }: { width: number; height: number }) {
@@ -109,12 +95,11 @@ export function RadialPaw({ width, height }: { width: number; height: number }) 
   const listening = useStore((s) => s.listening);
   const empty = useStore((s) => s.project.clips.length === 0);
   if (!radial) return null;
-  const toes = empty ? START : effectToes(radial.subjectId);
+  const toes = empty ? START : EDIT;
   const R = toes.length > 4 ? 94 : 84;
   // Keep the whole ring on screen.
   const cx = Math.min(Math.max(radial.x, R + 40), width - R - 40);
   const cy = Math.min(Math.max(radial.y, R + 90), height - R - 150);
-  const waiting = !empty && (radial.finding || !radial.subjectId);
   return (
     <div className="radial" style={{ left: cx, top: cy }}>
       {toes.map((t, i) => {
@@ -124,10 +109,10 @@ export function RadialPaw({ width, height }: { width: number; height: number }) 
             key={t.id}
             className="rtoe"
             initial={{ x: 0, y: 0, opacity: 0, scale: 0.3 }}
-            animate={{ x: Math.cos(a) * R, y: Math.sin(a) * R, opacity: waiting ? 0.35 : 1, scale: 1 }}
+            animate={{ x: Math.cos(a) * R, y: Math.sin(a) * R, opacity: 1, scale: 1 }}
             transition={{ ...spring, delay: 0.04 + i * 0.025 }}
           >
-            <button aria-label={t.label} disabled={waiting} onClick={t.run}>
+            <button aria-label={t.label} onClick={t.run}>
               <Icon name={t.icon} size={20} />
             </button>
             <span>{t.label}</span>
@@ -142,7 +127,7 @@ export function RadialPaw({ width, height }: { width: number; height: number }) 
         animate={{ scale: listening ? [1, 1.12, 1] : 1 }}
         transition={listening ? { duration: 1.1, repeat: Infinity } : spring}
       >
-        {radial.finding && !listening ? <span className="spinner" /> : <Icon name="mic" size={28} />}
+        <Icon name="mic" size={28} />
       </motion.button>
     </div>
   );

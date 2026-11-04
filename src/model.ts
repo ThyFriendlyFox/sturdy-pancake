@@ -100,55 +100,6 @@ export interface MotionItem {
 
 export type Aspect = "9:16" | "1:1" | "4:5" | "16:9";
 
-/** Effects a subject layer can carry. A missing key means the effect is off. */
-export interface SubjectEffects {
-  glow?: { color: string; strength: number; breathing: number }; // strength 0..1, breathing 0..1 (0 = steady)
-  trail?: { color: string; length: number }; // length 2..12 copies
-  spotlight?: { dim: number }; // 0..1 darkness outside the subject
-  recolor?: { hue: number }; // degrees
-  erase?: { blur: number }; // px
-  freeze?: { at: number }; // source seconds of the frozen copy
-  clone?: { dx: number; dy: number; scale: number }; // offset as fraction of frame
-  sticker?: { x: number; y: number; scale: number; rotate: number }; // frozen cut-out with a white edge
-  follow?: { zoom: number }; // camera keeps the subject centered
-}
-
-/** Something the user tapped in a clip. Masks live on the device (src/subjects.ts), not in the project. */
-export interface SubjectLayer {
-  id: string;
-  name: string;
-  clipId: string;
-  t0: number; // source seconds where it was tapped
-  point: [number, number]; // tap point, 0..1 of the source frame
-  effects: SubjectEffects;
-}
-
-export const EFFECT_NAMES = ["glow", "trail", "spotlight", "recolor", "erase", "freeze", "clone", "sticker", "follow"] as const;
-export type EffectName = (typeof EFFECT_NAMES)[number];
-
-export function defaultEffect(name: EffectName, t0 = 0): NonNullable<SubjectEffects[EffectName]> {
-  switch (name) {
-    case "glow":
-      return { color: "#8B7BFF", strength: 0.7, breathing: 0.3 };
-    case "trail":
-      return { color: "#8B7BFF", length: 6 };
-    case "spotlight":
-      return { dim: 0.65 };
-    case "recolor":
-      return { hue: 180 };
-    case "erase":
-      return { blur: 28 };
-    case "freeze":
-      return { at: t0 };
-    case "clone":
-      return { dx: -0.3, dy: 0, scale: 1 };
-    case "sticker":
-      return { x: 0.72, y: 0.2, scale: 0.35, rotate: -8 };
-    case "follow":
-      return { zoom: 1.5 };
-  }
-}
-
 export interface Project {
   aspect: Aspect;
   background: string;
@@ -157,7 +108,6 @@ export interface Project {
   music: MusicTrack;
   texts: TextItem[];
   motions: MotionItem[];
-  subjects: SubjectLayer[];
 }
 
 export const IMAGE_DEFAULT_DURATION = 3;
@@ -179,7 +129,6 @@ export const emptyProject = (): Project => ({
   music: { mediaId: null, offset: 0, volume: 0.6, fadeIn: 0.5, fadeOut: 1.5, duck: true },
   texts: [],
   motions: [],
-  subjects: [],
 });
 
 export const uid = (p = "") => p + Math.random().toString(36).slice(2, 8);
@@ -313,6 +262,5 @@ export function describe(p: Project, media: Media[], time: number, selectedClipI
     music: p.music,
     texts: p.texts,
     motions: p.motions,
-    subjects: p.subjects,
   };
 }

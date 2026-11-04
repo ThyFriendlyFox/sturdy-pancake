@@ -33,7 +33,7 @@ export const session = {
   get connected() {
     return !!agent;
   },
-  /** Send a message. The selected subject, if any, goes with it. */
+  /** Send a message. */
   async ask(text: string) {
     const t = text.trim();
     if (!t || busy) return;
@@ -42,10 +42,7 @@ export const session = {
     busy = true;
     emit();
     const before = store.get().recipes.length;
-    const s = store.get();
-    const sel = s.project.subjects.find((x) => x.id === s.selectedSubjectId);
-    const context = sel ? `\n\n(The user tapped subject ${sel.id} "${sel.name}" and is talking about it.)` : "";
-    await agent.send(t + context, {
+    await agent.send(t, {
       onText: (x) => push("ai", x),
       onTool: (name) => push("tool", name.replace(/_/g, " ")),
     });

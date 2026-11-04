@@ -12,8 +12,7 @@ export interface State {
   playing: boolean;
   aiFlash: { ids: string[]; at: number }; // components the AI just opened (for a highlight)
   page: 0 | 1 | 2; // 0 tracks, 1 video, 2 talk
-  selectedSubjectId: string | null;
-  radial: { x: number; y: number; subjectId: string | null; finding: boolean } | null; // paw menu around a tap, in screen px
+  radial: { x: number; y: number } | null; // paw menu around a tap, in screen px
   heard: string; // live speech transcript
   listening: boolean;
   voiceNote: string; // what the voice input is doing, e.g. "Writing down what you said…"
@@ -43,7 +42,9 @@ function load(): Partial<State> {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return {};
     const s = JSON.parse(raw);
-    return { project: { ...emptyProject(), ...s.project }, media: s.media ?? [] };
+    // Projects saved before 0.6 carry tapped-subject layers; masking is gone, so drop them.
+    const { subjects: _gone, ...project } = s.project ?? {};
+    return { project: { ...emptyProject(), ...project }, media: s.media ?? [] };
   } catch {
     return {};
   }
@@ -58,7 +59,6 @@ let state: State = {
   playing: false,
   aiFlash: { ids: [], at: 0 },
   page: 1,
-  selectedSubjectId: null,
   radial: null,
   heard: "",
   listening: false,

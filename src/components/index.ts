@@ -9,7 +9,6 @@ import { motionComponent, textComponent } from "./overlays";
 import { musicComponent, pitchComponent, voiceComponent } from "./audio";
 import { timelineComponent } from "./timeline";
 import { videoTrackComponent } from "./videotrack";
-import { subjectComponent } from "./subject";
 import { examplesComponent } from "./examples";
 import type { ComponentDef, ToolDef } from "./types";
 
@@ -27,7 +26,6 @@ export const COMPONENTS: ComponentDef[] = [
   motionComponent,
   formatComponent,
   exportComponent,
-  subjectComponent,
   examplesComponent,
 ];
 

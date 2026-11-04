@@ -2,9 +2,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { detectBeats } from "../beats";
 import { componentById } from "../components";
-import { SubjectPanel, Thumb, EFFECT_LABEL } from "../components/subject";
 import { getEngine } from "../engine";
-import { EFFECT_NAMES, defaultFilters, layout, totalDuration, type EffectName } from "../model";
+import { defaultFilters, layout, totalDuration } from "../model";
 import { mediaUrl, pickFiles } from "../media";
 import { newClip } from "../model";
 import { store, useStore } from "../store";
@@ -29,7 +28,7 @@ interface Lane {
   key: string;
   name: string;
   icon: ReactNode;
-  comps: string[]; // component ids shown when the lane opens; "subject:<id>" for a subject
+  comps: string[]; // component ids shown when the lane opens
   blocks: Block[];
   wave?: number[]; // 0..1 heights across the lane
   sub?: { label: string; blocks: Block[] }[];
@@ -85,7 +84,6 @@ function useLanes(): Lane[] {
   const placed = layout(p);
   const song = media.find((m) => m.id === p.music.mediaId);
   const peaks = useSongPeaks(song?.id ?? null);
-  const span = (clipId: string) => placed.find((x) => x.clip.id === clipId);
 
   let musicWave: number[] | undefined;
   if (song && peaks?.length) {
@@ -113,25 +111,6 @@ function useLanes(): Lane[] {
       ]),
       empty: "Add clips",
     },
-    ...p.subjects.map<Lane>((s) => {
-      const pl = span(s.clipId);
-      const r = pl ? { start: pl.start, end: pl.end } : { start: 0, end: 0 };
-      const fx = EFFECT_NAMES.filter((n) => s.effects[n]) as EffectName[];
-      return {
-        key: "subject:" + s.id,
-        name: s.name,
-        icon: <Thumb id={s.id} size={26} />,
-        comps: ["subject:" + s.id],
-        blocks: [{ key: s.id, ...r, color: "rgba(139,123,255,0.28)", label: "Followed" }],
-        sub: fx.map((n) => ({
-          label: EFFECT_LABEL[n],
-          blocks: [
-            { key: n, ...r, color: n === "glow" || n === "trail" ? ((s.effects[n] as { color: string }).color ?? "#8B7BFF") : "#8B7BFF" },
-          ],
-        })),
-        empty: "",
-      };
-    }),
     {
       key: "text",
       name: "Text",
@@ -241,7 +220,7 @@ function LaneBar({ lane, dur, time, small }: { lane: Lane; dur: number; time: nu
 function LanePanel({ lane }: { lane: Lane }) {
   const [tab, setTab] = useState(0);
   const comp = lane.comps[Math.min(tab, lane.comps.length - 1)];
-  const Body = comp.startsWith("subject:") ? () => <SubjectPanel subjectId={comp.slice(8)} /> : componentById(comp)?.Panel;
+  const Body = componentById(comp)?.Panel;
   return (
     <motion.div
       className="lane-panel"

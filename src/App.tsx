@@ -4,13 +4,23 @@ import { Agent } from "./ai/agent";
 import { session } from "./ai/session";
 import { finishOpenRouterLogin, loadSettings, type AiSettings } from "./ai/settings";
 import { restoreMedia } from "./media";
-import { checkLastCrash, restoreSubjects } from "./subjects";
-import { store } from "./store";
 import { Connect } from "./ui/Connect";
 import { Pager } from "./ui/Pager";
 import { TalkScreen } from "./ui/TalkScreen";
 import { TracksScreen } from "./ui/TracksScreen";
 import { VideoScreen } from "./ui/VideoScreen";
+
+/** Masking (0.3–0.5) left saved masks and crash counters on the device. Free that space once. */
+function removeMaskingLeftovers() {
+  try {
+    if (localStorage.getItem("ck.masksRemoved")) return;
+    indexedDB.deleteDatabase("ck-masks");
+    for (const k of ["ck.segBusy", "ck.segCrashes", "ck.masksRemoved"]) localStorage.removeItem(k);
+    localStorage.setItem("ck.masksRemoved", "1");
+  } catch {
+    /* private mode */
+  }
+}
 
 export function App() {
   const [settings, setSettings] = useState<AiSettings | null>(loadSettings);
@@ -23,11 +33,8 @@ export function App() {
   }, [agent]);
 
   useEffect(() => {
-    const crashed = checkLastCrash();
-    if (crashed) store.toast(crashed);
-    restoreMedia()
-      .then(() => restoreSubjects())
-      .then(() => force((n) => n + 1));
+    removeMaskingLeftovers();
+    restoreMedia().then(() => force((n) => n + 1));
     finishOpenRouterLogin()
       .then((s) => s && setSettings(s))
       .catch((e) => alert(e.message));

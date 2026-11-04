@@ -4,27 +4,14 @@ import { useSession, useBusy } from "../ai/session";
 import { Engine, getEngine, setEngine } from "../engine";
 import { totalDuration } from "../model";
 import { store, useStore } from "../store";
-import { hitSubject, isolate, useModelProgress, warmup } from "../subjects";
-import { SubjectStatusLine, Thumb } from "../components/subject";
 import { CardHost } from "./CardHost";
 import { ImportProgress } from "./ImportProgress";
 import { fmtTime } from "./controls";
 import { Icon } from "./icons";
 import { Mirror } from "./Mirror";
-import { listen, RadialPaw, setPendingSubject } from "./Paw";
+import { listen, RadialPaw } from "./Paw";
 import { cancelListening } from "../voice";
 import { spring } from "./Sheet";
-
-/** Screen point → canvas point (0..1), honoring object-fit: contain. */
-function canvasPoint(canvas: HTMLCanvasElement, clientX: number, clientY: number) {
-  const r = canvas.getBoundingClientRect();
-  const k = Math.min(r.width / canvas.width, r.height / canvas.height);
-  const w = canvas.width * k,
-    h = canvas.height * k;
-  const x = (clientX - r.left - (r.width - w) / 2) / w,
-    y = (clientY - r.top - (r.height - h) / 2) / h;
-  return x >= 0 && x <= 1 && y >= 0 && y <= 1 ? { x, y } : null;
-}
 
 function Progress() {
   const time = useStore((s) => s.time);
@@ -76,33 +63,6 @@ function Progress() {
       </div>
       <span className="mono">{fmtTime(dur)}</span>
     </div>
-  );
-}
-
-function SubjectChip() {
-  const id = useStore((s) => s.selectedSubjectId);
-  const s = useStore((st) => st.project.subjects.find((x) => x.id === id));
-  return (
-    <AnimatePresence>
-      {s && (
-        <motion.div
-          className="subject-chip no-swipe"
-          initial={{ y: -30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -30, opacity: 0 }}
-          transition={spring}
-        >
-          <Thumb id={s.id} size={32} />
-          <span className="stack" style={{ gap: 1, minWidth: 0 }}>
-            <b className="ellipsis">{s.name}</b>
-            <SubjectStatusLine id={s.id} />
-          </span>
-          <button className="icon-btn" aria-label="Done" onClick={() => store.set({ selectedSubjectId: null, radial: null })}>
-            <Icon name="x" size={16} stroke={2} />
-          </button>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }
 
@@ -217,26 +177,6 @@ function VoiceLayer() {
   );
 }
 
-/** Under the paw ring while the model works: download progress the first time, then "Finding it". */
-function FindingLabel() {
-  const radial = useStore((s) => s.radial);
-  const p = useModelProgress();
-  if (!radial?.finding) return null;
-  return (
-    <motion.div className="finding" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
-      {p < 1 ? `Getting the cut-out tool ready · ${Math.round(p * 100)}%` : "Finding it…"}
-      {p < 1 && (
-        <span className="import-bar">
-          <motion.span
-            style={{ display: "block", height: "100%", background: "var(--accent)" }}
-            animate={{ width: `${Math.max(4, p * 100)}%` }}
-          />
-        </span>
-      )}
-    </motion.div>
-  );
-}
-
 /** True while clips exist but the one under the playhead has no frame to show (iPhone before the first tap). */
 function useNoFrame() {
   const has = useStore((s) => s.project.clips.length > 0);
@@ -251,7 +191,7 @@ function useNoFrame() {
 
 function TapHint() {
   const noFrame = useNoFrame();
-  const idle = useStore((s) => s.project.subjects.length === 0 && !s.radial && !s.listening && s.visible.length === 0);
+  const idle = useStore((s) => !s.radial && !s.listening && s.visible.length === 0);
   const show = noFrame || idle;
   return (
     <AnimatePresence>
@@ -285,12 +225,6 @@ export function VideoScreen() {
     ro.observe(root.current!);
     return () => ro.disconnect();
   }, []);
-  // Fetch the cut-out model only after the video is up, so it does not compete with loading it.
-  useEffect(() => {
-    if (empty) return;
-    const t = setTimeout(warmup, 5000);
-    return () => clearTimeout(t);
-  }, [empty]);
 
   // A tap opens the paw menu and starts listening in the same tap (iPhone allows the microphone only there).
   const onTap = (clientX: number, clientY: number) => {
@@ -300,47 +234,14 @@ export function VideoScreen() {
       cancelListening();
       return store.set({ radial: null });
     }
-    const box = root.current!.getBoundingClientRect();
-    const at = { x: clientX - box.left, y: clientY - box.top };
-    const open = (subjectId: string | null, finding: boolean) => store.set({ radial: { ...at, subjectId, finding } });
     // No frame yet (iPhone after a reload): this tap only wakes the video.
     if (!empty && !e.hasFrame()) {
       e.prime();
       return;
     }
-    if (empty) {
-      open(null, false);
-      setPendingSubject(Promise.resolve(null));
-      listen();
-      return;
-    }
     e.pause();
-    const p = canvasPoint(canvas.current, clientX, clientY);
-    const hit = p && e.toSource(e.t, p.x, p.y);
-    const existing = hit ? hitSubject(hit.clipId, hit.sourceT, hit.point) : null;
-    if (!hit || existing) {
-      if (existing) store.set({ selectedSubjectId: existing });
-      open(existing, false);
-      setPendingSubject(Promise.resolve(existing));
-      listen();
-      return;
-    }
-    open(null, true);
-    store.set({ selectedSubjectId: null });
-    setPendingSubject(
-      isolate(hit.clipId, hit.sourceT, hit.point, "user").then(
-        (id) => {
-          if (store.get().radial) open(id, false);
-          store.set({ selectedSubjectId: id });
-          return id;
-        },
-        (err) => {
-          if (store.get().radial) open(null, false);
-          store.toast((err as Error).message || "Could not find anything there");
-          return null;
-        },
-      ),
-    );
+    const box = root.current!.getBoundingClientRect();
+    store.set({ radial: { x: clientX - box.left, y: clientY - box.top } });
     listen();
   };
 
@@ -377,10 +278,8 @@ export function VideoScreen() {
         )
       ) : (
         <>
-          <SubjectChip />
           <TapHint />
           <Progress />
-          <FindingLabel />
         </>
       )}
       <RadialPaw width={size.w} height={size.h} />

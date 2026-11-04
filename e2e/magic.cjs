@@ -54,7 +54,6 @@ const [url, video, out, wav] = process.argv.slice(2);
         turn === 1
           ? [
               { type: "tool_use", id: "a1", name: "apply_look", input: { target: "all", look: "warm" } },
-              { type: "tool_use", id: "a2", name: "rename_subject", input: { id: state.subjects[0]?.id ?? "x", name: "Dog" } },
               { type: "tool_use", id: "a3", name: "show_components", input: { ids: ["color"] } },
             ]
           : [
@@ -121,7 +120,7 @@ const [url, video, out, wav] = process.argv.slice(2);
   await shot("03-video");
   if ((await page.locator(".paw").count()) !== 0) throw new Error("corner paw still there");
 
-  // Tap the dog: the menu opens and listening starts at once; the fake mic says the sentence.
+  // Tap the video: the menu opens and listening starts at once; the fake mic says the sentence.
   const box = await page.locator("canvas.stage").boundingBox();
   await page.mouse.click(box.x + box.width * 0.42, box.y + box.height * 0.5);
   await page.waitForSelector(".radial", { state: "attached" });
@@ -130,28 +129,25 @@ const [url, video, out, wav] = process.argv.slice(2);
   await shot("04-tap-listening");
   await page.waitForFunction(() => document.body.innerText.includes("Warmer now."), null, { timeout: 300000 });
   log("AI heard:", JSON.stringify(firstAsk));
-  if (!/warmer/i.test(firstAsk) || !/tapped subject/.test(firstAsk)) throw new Error("voice did not reach the AI with the subject");
+  if (!/warmer/i.test(firstAsk)) throw new Error("voice did not reach the AI");
   await page.waitForTimeout(800);
   await shot("05-voice-done");
 
-  // Tap the dog again (after closing the card the AI opened): its menu; pick Glow (cancels listening).
+  // Tap again (after closing the card the AI opened): the menu's toes raise components. Pick Text.
   await page.click(".fcard button[aria-label^=Close]");
   await page.waitForTimeout(500);
   await page.mouse.click(box.x + box.width * 0.42, box.y + box.height * 0.5);
-  await page.waitForSelector(".rtoe button[aria-label=Glow]:not([disabled])");
-  await page.click(".rtoe button[aria-label=Glow]");
-  await page.waitForTimeout(800);
-  await shot("06-glow-card");
-  // Spotlight via the docked card.
-  await page.click(".fcard .chip:has-text('Spotlight')");
-  await page.waitForTimeout(400);
-  await page.click(".fcard .chip:has-text('Trail')");
-  await page.waitForSelector("text=Followed, whole clip", { timeout: 400000 });
-  log("followed");
+  await page.waitForSelector(".rtoe button[aria-label=Text]");
+  await shot("06-edit-menu");
+  for (const label of ["Trim", "Text", "Music", "Look", "Effects", "Export", "Add clips", "Voice"])
+    if (!(await page.locator(`.rtoe button[aria-label='${label}']`).count())) throw new Error("menu lacks " + label);
+  await page.click(".rtoe button[aria-label=Text]");
+  await page.waitForSelector(".fcard:has-text('Text & captions')");
+  if (await page.locator(".rpad.listening").count()) throw new Error("still listening after picking a toe");
+  await shot("07-text-card");
   await page.click(".fcard button[aria-label^=Close]");
   await page.click("button.play");
-  await page.waitForTimeout(1800);
-  await shot("07-playing-effects");
+  await page.waitForTimeout(1500);
   await page.click("button.play");
 
   // Swipes: exactly one screen per swipe, from the middle of any screen, and a forced scroll cannot drift them.
@@ -186,7 +182,7 @@ const [url, video, out, wav] = process.argv.slice(2);
   await page.click(".dots button[aria-label=Tracks] >> nth=1");
   await page.waitForTimeout(900);
   await shot("10-tracks");
-  await page.click(".lane-row:has-text('Dog')");
+  await page.click(".lane-row:has-text('Video')");
   await page.waitForTimeout(700);
   await shot("11-track-open");
 
@@ -202,16 +198,7 @@ const [url, video, out, wav] = process.argv.slice(2);
   await page.waitForTimeout(800); // project saves 300 ms after an edit
   await shot("12-recipe");
   const s = await state();
-  log(
-    "clips",
-    before,
-    "->",
-    s.clips.length,
-    "motions",
-    s.motions.length,
-    "subjects",
-    JSON.stringify(s.subjects.map((x) => ({ name: x.name, fx: Object.keys(x.effects) }))),
-  );
+  log("clips", before, "->", s.clips.length, "motions", s.motions.length, "has subjects", "subjects" in s);
   log("errors", errors);
   await b.close();
   process.exit(errors.length ? 1 : 0);

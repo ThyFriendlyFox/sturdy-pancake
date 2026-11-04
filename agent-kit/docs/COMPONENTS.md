@@ -1,6 +1,6 @@
 # Components
 
-A component is one editing unit: a Panel the user drives by hand and tools the AI calls. All components start hidden. A Panel appears in 2 places: as the floating card over the video (`src/ui/CardHost.tsx`), and inside its open track on the Tracks screen (`src/ui/TracksScreen.tsx`). CutKit has 15 components. The registry is `src/components/index.ts`.
+A component is one editing unit: a Panel the user drives by hand and tools the AI calls. All components start hidden. A Panel appears in 2 places: as the floating card over the video (`src/ui/CardHost.tsx`), and inside its open track on the Tracks screen (`src/ui/TracksScreen.tsx`). CutKit has 14 components. The registry is `src/components/index.ts`.
 
 | Id | Title | AI tools |
 |---|---|---|
@@ -17,7 +17,6 @@ A component is one editing unit: a Panel the user drives by hand and tools the A
 | `motion` | Motion graphics | `add_motion`, `update_motion`, `remove_motion` |
 | `format` | Format | `set_format` |
 | `export` | Export | none — only the user starts a render |
-| `subject` | Subject | `isolate_subject`, `set_subject_effect`, `rename_subject`, `remove_subject` |
 | `examples` | Copy an edit | `analyze_example`, `propose_recipe` |
 
 Core tools (not tied to one component): `show_components`, `hide_components`, `get_state`, `undo`, `view_frame`.
